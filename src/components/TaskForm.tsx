@@ -11,6 +11,8 @@ import { X, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task, Subtask } from '@/types/Task';
+import { sanitizeTextInput, INPUT_LIMITS, containsOnlyAllowedChars } from '@/utils/security';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskFormProps {
   task?: Task | null;
@@ -34,6 +36,8 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
   });
   const [newLabel, setNewLabel] = useState('');
   const [newSubtask, setNewSubtask] = useState('');
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const { toast } = useToast();
 
   useEffect(() => {
     if (task) {
@@ -53,20 +57,101 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     }
   }, [task]);
 
+  const validateInput = (field: string, value: string, maxLength: number): string | null => {
+    try {
+      if (!containsOnlyAllowedChars(value)) {
+        return 'Contains invalid characters';
+      }
+      
+      if (value.length > maxLength) {
+        return `Must be ${maxLength} characters or less`;
+      }
+      
+      return null;
+    } catch (error) {
+      return 'Invalid input';
+    }
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const error = validateInput('title', value, INPUT_LIMITS.TITLE);
+    
+    setErrors(prev => ({ ...prev, title: error || '' }));
+    setFormData(prev => ({ ...prev, title: value }));
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const error = validateInput('description', value, INPUT_LIMITS.DESCRIPTION);
+    
+    setErrors(prev => ({ ...prev, description: error || '' }));
+    setFormData(prev => ({ ...prev, description: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
     
-    onSubmit(formData);
+    try {
+      // Validate and sanitize all inputs
+      const sanitizedTitle = sanitizeTextInput(formData.title, INPUT_LIMITS.TITLE);
+      const sanitizedDescription = sanitizeTextInput(formData.description, INPUT_LIMITS.DESCRIPTION);
+      
+      if (!sanitizedTitle.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Title is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Sanitize labels
+      const sanitizedLabels = formData.labels.map(label => 
+        sanitizeTextInput(label, INPUT_LIMITS.LABEL)
+      );
+
+      // Sanitize subtasks
+      const sanitizedSubtasks = formData.subtasks.map(subtask => ({
+        ...subtask,
+        title: sanitizeTextInput(subtask.title, INPUT_LIMITS.SUBTASK_TITLE)
+      }));
+
+      const sanitizedFormData = {
+        ...formData,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
+        labels: sanitizedLabels,
+        subtasks: sanitizedSubtasks,
+      };
+
+      onSubmit(sanitizedFormData);
+    } catch (error: any) {
+      toast({
+        title: "Validation Error",
+        description: error.message || "Please check your input",
+        variant: "destructive",
+      });
+    }
   };
 
   const addLabel = () => {
-    if (newLabel.trim() && !formData.labels.includes(newLabel.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        labels: [...prev.labels, newLabel.trim()]
-      }));
-      setNewLabel('');
+    try {
+      const sanitizedLabel = sanitizeTextInput(newLabel, INPUT_LIMITS.LABEL);
+      
+      if (sanitizedLabel && !formData.labels.includes(sanitizedLabel)) {
+        setFormData(prev => ({
+          ...prev,
+          labels: [...prev.labels, sanitizedLabel]
+        }));
+        setNewLabel('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Validation Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -78,17 +163,27 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
   };
 
   const addSubtask = () => {
-    if (newSubtask.trim()) {
-      const subtask: Subtask = {
-        id: crypto.randomUUID(),
-        title: newSubtask.trim(),
-        completed: false,
-      };
-      setFormData(prev => ({
-        ...prev,
-        subtasks: [...prev.subtasks, subtask]
-      }));
-      setNewSubtask('');
+    try {
+      const sanitizedSubtask = sanitizeTextInput(newSubtask, INPUT_LIMITS.SUBTASK_TITLE);
+      
+      if (sanitizedSubtask) {
+        const subtask: Subtask = {
+          id: crypto.randomUUID(),
+          title: sanitizedSubtask,
+          completed: false,
+        };
+        setFormData(prev => ({
+          ...prev,
+          subtasks: [...prev.subtasks, subtask]
+        }));
+        setNewSubtask('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Validation Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -99,6 +194,8 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     }));
   };
 
+  const hasErrors = Object.values(errors).some(error => error);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -108,25 +205,35 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">Title * ({formData.title.length}/{INPUT_LIMITS.TITLE})</Label>
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={handleTitleChange}
               placeholder="Enter task title..."
+              maxLength={INPUT_LIMITS.TITLE}
               required
+              className={errors.title ? 'border-red-500' : ''}
             />
+            {errors.title && (
+              <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description ({formData.description.length}/{INPUT_LIMITS.DESCRIPTION})</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={handleDescriptionChange}
               placeholder="Enter task description..."
+              maxLength={INPUT_LIMITS.DESCRIPTION}
               rows={3}
+              className={errors.description ? 'border-red-500' : ''}
             />
+            {errors.description && (
+              <p className="text-sm text-red-600 mt-1">{errors.description}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -231,6 +338,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Add label..."
+                maxLength={INPUT_LIMITS.LABEL}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLabel())}
               />
               <Button type="button" onClick={addLabel} variant="outline">
@@ -261,6 +369,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                 value={newSubtask}
                 onChange={(e) => setNewSubtask(e.target.value)}
                 placeholder="Add subtask..."
+                maxLength={INPUT_LIMITS.SUBTASK_TITLE}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSubtask())}
               />
               <Button type="button" onClick={addSubtask} variant="outline">
@@ -285,7 +394,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1" disabled={hasErrors}>
               {task ? 'Update Task' : 'Add Task'}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>

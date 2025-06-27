@@ -6,6 +6,7 @@ import { Edit, Trash2, Calendar, ChevronDown, ChevronRight, RotateCcw } from 'lu
 import { Task } from '@/types/Task';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { sanitizeHtml } from '@/utils/security';
 
 interface TaskItemProps {
   task: Task;
@@ -17,6 +18,10 @@ interface TaskItemProps {
 
 const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskItemProps) => {
   const [showSubtasks, setShowSubtasks] = useState(false);
+
+  // Safely display user content by sanitizing it
+  const safeTitle = sanitizeHtml(task.title);
+  const safeDescription = task.description ? sanitizeHtml(task.description) : '';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -75,7 +80,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
               "font-medium",
               task.completed ? "line-through text-gray-500" : "text-gray-900"
             )}>
-              {task.title}
+              {safeTitle}
             </h3>
             
             <span className={cn(
@@ -103,12 +108,12 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
             )}
           </div>
 
-          {task.description && (
+          {safeDescription && (
             <p className={cn(
               "text-sm mb-2",
               task.completed ? "text-gray-400" : "text-gray-600"
             )}>
-              {task.description}
+              {safeDescription}
             </p>
           )}
 
@@ -118,7 +123,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
                 key={label}
                 className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
               >
-                {label}
+                {sanitizeHtml(label)}
               </span>
             ))}
             
@@ -158,7 +163,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
                         "text-sm",
                         subtask.completed ? "line-through text-gray-400" : "text-gray-700"
                       )}>
-                        {subtask.title}
+                        {sanitizeHtml(subtask.title)}
                       </span>
                     </div>
                   ))}

@@ -9,18 +9,58 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import PasswordStrengthIndicator from './PasswordStrengthIndicator';
+import { validateEmail, validatePasswordStrength, INPUT_LIMITS } from '@/utils/security';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const { signUp, signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    
+    // Validate email on change
+    if (value && !validateEmail(value)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Check length limit
+    if (value.length > INPUT_LIMITS.PASSWORD) {
+      setPasswordError(`Password cannot exceed ${INPUT_LIMITS.PASSWORD} characters`);
+      return;
+    }
+    
+    setPassword(value);
+    setPasswordError('');
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    // Validate inputs
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      setPasswordError('Please ensure your password meets all requirements');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -42,7 +82,17 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    // Basic validation for sign in
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
+    if (!password) {
+      setPasswordError('Password is required');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -95,10 +145,15 @@ const Auth = () => {
                     id="signin-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
                     placeholder="Enter your email"
+                    maxLength={INPUT_LIMITS.EMAIL}
                     required
+                    className={emailError ? 'border-red-500' : ''}
                   />
+                  {emailError && (
+                    <p className="text-sm text-red-600">{emailError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Password</Label>
@@ -106,12 +161,17 @@ const Auth = () => {
                     id="signin-password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     placeholder="Enter your password"
+                    maxLength={INPUT_LIMITS.PASSWORD}
                     required
+                    className={passwordError ? 'border-red-500' : ''}
                   />
+                  {passwordError && (
+                    <p className="text-sm text-red-600">{passwordError}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !!emailError || !!passwordError}>
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
@@ -125,10 +185,15 @@ const Auth = () => {
                     id="signup-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
                     placeholder="Enter your email"
+                    maxLength={INPUT_LIMITS.EMAIL}
                     required
+                    className={emailError ? 'border-red-500' : ''}
                   />
+                  {emailError && (
+                    <p className="text-sm text-red-600">{emailError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -136,12 +201,27 @@ const Auth = () => {
                     id="signup-password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     placeholder="Create a password"
+                    maxLength={INPUT_LIMITS.PASSWORD}
                     required
+                    className={passwordError ? 'border-red-500' : ''}
                   />
+                  {passwordError && (
+                    <p className="text-sm text-red-600">{passwordError}</p>
+                  )}
+                  <PasswordStrengthIndicator password={password} />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={
+                    loading || 
+                    !!emailError || 
+                    !!passwordError || 
+                    !validatePasswordStrength(password).isValid
+                  }
+                >
                   {loading ? 'Creating account...' : 'Sign Up'}
                 </Button>
               </form>
