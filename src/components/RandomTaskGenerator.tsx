@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
@@ -84,7 +83,7 @@ const RandomTaskGenerator = () => {
   };
 
   const filteredTasksCount = getFilteredTasks().length;
-  const hasActiveFilters = filters.priority || filters.effort || filters.label;
+  const hasActiveFilters = Boolean(filters.priority || filters.effort || filters.label);
 
   return (
     <div className="p-6">
