@@ -1,19 +1,21 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { X, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Task, Subtask } from '@/types/Task';
 import { sanitizeTextInput, INPUT_LIMITS, containsOnlyAllowedChars } from '@/utils/security';
 import { useToast } from '@/hooks/use-toast';
 import TaskFormBasicFields from './TaskFormBasicFields';
+import LabelAutosuggest from './LabelAutosuggest';
+import { Input } from '@/components/ui/input';
+import { X } from 'lucide-react';
 
 interface TaskFormProps {
   task?: Task | null;
@@ -36,7 +38,6 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     updated_at: undefined as Date | undefined,
     bucket_id: undefined as string | undefined,
   });
-  const [newLabel, setNewLabel] = useState('');
   const [newSubtask, setNewSubtask] = useState('');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
@@ -137,33 +138,6 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         variant: "destructive",
       });
     }
-  };
-
-  const addLabel = () => {
-    try {
-      const sanitizedLabel = sanitizeTextInput(newLabel, INPUT_LIMITS.LABEL);
-      
-      if (sanitizedLabel && !formData.labels.includes(sanitizedLabel)) {
-        setFormData(prev => ({
-          ...prev,
-          labels: [...prev.labels, sanitizedLabel]
-        }));
-        setNewLabel('');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Validation Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const removeLabel = (label: string) => {
-    setFormData(prev => ({
-      ...prev,
-      labels: prev.labels.filter(l => l !== label)
-    }));
   };
 
   const addSubtask = () => {
@@ -282,33 +256,11 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
 
           <div>
             <Label>Labels</Label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                placeholder="Add label..."
-                maxLength={INPUT_LIMITS.LABEL}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLabel())}
-              />
-              <Button type="button" onClick={addLabel} variant="outline">
-                Add
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.labels.map((label) => (
-                <span
-                  key={label}
-                  className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center gap-1"
-                >
-                  {label}
-                  <X
-                    size={14}
-                    className="cursor-pointer hover:text-blue-600"
-                    onClick={() => removeLabel(label)}
-                  />
-                </span>
-              ))}
-            </div>
+            <LabelAutosuggest
+              labels={formData.labels}
+              onLabelsChange={(labels) => setFormData(prev => ({ ...prev, labels }))}
+              maxLength={INPUT_LIMITS.LABEL}
+            />
           </div>
 
           <div>

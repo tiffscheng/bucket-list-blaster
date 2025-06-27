@@ -5,14 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-interface Bucket {
+export interface Bucket {
   id: string;
   name: string;
   color: string;
   order_index: number;
   is_default: boolean;
-  created_at: Date;
-  updated_at: Date;
+  user_id?: string;
 }
 
 const LOCAL_STORAGE_KEY = 'taskflow-buckets';
@@ -29,37 +28,30 @@ export const useBuckets = () => {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         try {
-          const parsedBuckets = JSON.parse(stored).map((bucket: any) => ({
-            ...bucket,
-            created_at: new Date(bucket.created_at),
-            updated_at: new Date(bucket.updated_at),
-          }));
+          const parsedBuckets = JSON.parse(stored);
           setLocalBuckets(parsedBuckets);
         } catch (error) {
           console.error('Error parsing local buckets:', error);
-          setLocalBuckets([{ 
-            id: 'default', 
-            name: 'General Tasks', 
-            color: '#3b82f6', 
-            order_index: 0, 
+          // Create default bucket if parsing fails
+          const defaultBucket: Bucket = {
+            id: 'default-general',
+            name: 'General',
+            color: '#3b82f6',
+            order_index: 0,
             is_default: true,
-            created_at: new Date(),
-            updated_at: new Date()
-          }]);
+          };
+          setLocalBuckets([defaultBucket]);
         }
       } else {
-        // Create default bucket if none exists
-        const defaultBucket = { 
-          id: 'default', 
-          name: 'General Tasks', 
-          color: '#3b82f6', 
-          order_index: 0, 
+        // Create default bucket if no stored buckets
+        const defaultBucket: Bucket = {
+          id: 'default-general',
+          name: 'General',
+          color: '#3b82f6',
+          order_index: 0,
           is_default: true,
-          created_at: new Date(),
-          updated_at: new Date()
         };
         setLocalBuckets([defaultBucket]);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([defaultBucket]));
       }
     }
   }, [user]);
@@ -84,11 +76,25 @@ export const useBuckets = () => {
 
       if (error) throw error;
 
-      return data.map(bucket => ({
-        ...bucket,
-        created_at: new Date(bucket.created_at),
-        updated_at: new Date(bucket.updated_at),
-      }));
+      // If no buckets exist, create a default one
+      if (data.length === 0) {
+        const { data: newBucket, error: createError } = await supabase
+          .from('buckets')
+          .insert([{
+            user_id: user.id,
+            name: 'General',
+            color: '#3b82f6',
+            order_index: 0,
+            is_default: true,
+          }])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return [newBucket];
+      }
+
+      return data;
     },
     enabled: !!user,
   });
@@ -97,19 +103,21 @@ export const useBuckets = () => {
   const buckets = user ? supabaseBuckets : localBuckets;
 
   // Local bucket operations
-  const addLocalBucket = (bucketData: Omit<Bucket, 'id' | 'created_at' | 'updated_at'>) => {
+  const addLocalBucket = (bucketData: Omit<Bucket, 'id'>) => {
     const newBucket: Bucket = {
       ...bucketData,
       id: crypto.randomUUID(),
-      created_at: new Date(),
-      updated_at: new Date(),
     };
     saveLocalBuckets([...localBuckets, newBucket]);
+    toast({
+      title: "Bucket added locally",
+      description: "Sign in to save your buckets permanently",
+    });
   };
 
   const updateLocalBucket = (id: string, updates: Partial<Bucket>) => {
     const updatedBuckets = localBuckets.map(bucket => 
-      bucket.id === id ? { ...bucket, ...updates, updated_at: new Date() } : bucket
+      bucket.id === id ? { ...bucket, ...updates } : bucket
     );
     saveLocalBuckets(updatedBuckets);
   };
@@ -117,24 +125,26 @@ export const useBuckets = () => {
   const deleteLocalBucket = (id: string) => {
     const updatedBuckets = localBuckets.filter(bucket => bucket.id !== id);
     saveLocalBuckets(updatedBuckets);
+    toast({
+      title: "Bucket deleted",
+      description: "Bucket removed from local storage",
+    });
   };
 
-  // Supabase mutations
+  // Supabase mutations (only for authenticated users)
   const addBucketMutation = useMutation({
-    mutationFn: async (bucketData: Omit<Bucket, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (bucketData: Omit<Bucket, 'id'>) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('buckets')
-        .insert([
-          {
-            user_id: user.id,
-            name: bucketData.name,
-            color: bucketData.color,
-            order_index: bucketData.order_index,
-            is_default: bucketData.is_default,
-          },
-        ])
+        .insert([{
+          user_id: user.id,
+          name: bucketData.name,
+          color: bucketData.color,
+          order_index: bucketData.order_index,
+          is_default: bucketData.is_default,
+        }])
         .select()
         .single();
 
@@ -157,6 +167,7 @@ export const useBuckets = () => {
     },
   });
 
+  // Update bucket mutation
   const updateBucketMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Bucket> }) => {
       const { error } = await supabase
@@ -165,7 +176,6 @@ export const useBuckets = () => {
           name: updates.name,
           color: updates.color,
           order_index: updates.order_index,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
 
@@ -173,6 +183,10 @@ export const useBuckets = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
+      toast({
+        title: "Success",
+        description: "Bucket updated successfully",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -183,8 +197,25 @@ export const useBuckets = () => {
     },
   });
 
+  // Delete bucket mutation
   const deleteBucketMutation = useMutation({
     mutationFn: async (id: string) => {
+      // First, move all tasks from this bucket to the default bucket
+      const { data: defaultBucket } = await supabase
+        .from('buckets')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('is_default', true)
+        .single();
+
+      if (defaultBucket) {
+        await supabase
+          .from('tasks')
+          .update({ bucket_id: defaultBucket.id })
+          .eq('bucket_id', id);
+      }
+
+      // Then delete the bucket
       const { error } = await supabase
         .from('buckets')
         .delete()
@@ -194,6 +225,7 @@ export const useBuckets = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       toast({
         title: "Success",
         description: "Bucket deleted successfully",
@@ -208,8 +240,8 @@ export const useBuckets = () => {
     },
   });
 
-  // Main functions
-  const addBucket = (bucketData: Omit<Bucket, 'id' | 'created_at' | 'updated_at'>) => {
+  // Main functions that handle both authenticated and non-authenticated users
+  const addBucket = (bucketData: Omit<Bucket, 'id'>) => {
     if (user) {
       addBucketMutation.mutate(bucketData);
     } else {
@@ -233,37 +265,11 @@ export const useBuckets = () => {
     }
   };
 
-  const reorderBuckets = async (newBuckets: Bucket[]) => {
-    if (user) {
-      const updates = newBuckets.map((bucket, index) => ({
-        id: bucket.id,
-        order_index: index,
-      }));
-
-      for (const update of updates) {
-        await supabase
-          .from('buckets')
-          .update({ order_index: update.order_index })
-          .eq('id', update.id);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
-    } else {
-      const reorderedBuckets = newBuckets.map((bucket, index) => ({ 
-        ...bucket, 
-        order_index: index,
-        updated_at: new Date()
-      }));
-      saveLocalBuckets(reorderedBuckets);
-    }
-  };
-
   return {
     buckets,
     isLoading: user ? isLoading : false,
     addBucket,
     updateBucket,
     deleteBucket,
-    reorderBuckets,
   };
 };
