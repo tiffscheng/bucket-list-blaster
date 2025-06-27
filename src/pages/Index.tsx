@@ -4,12 +4,14 @@ import TaskManager from '@/components/TaskManager';
 import CalendarView from '@/components/CalendarView';
 import RandomTaskGenerator from '@/components/RandomTaskGenerator';
 import { Button } from '@/components/ui/button';
-import { ListIcon, Calendar, Shuffle, LogOut } from 'lucide-react';
+import { ListIcon, Calendar, Shuffle, LogOut, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'list' | 'calendar' | 'random'>('list');
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -17,6 +19,10 @@ const Index = () => {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const handleSignIn = () => {
+    navigate('/auth');
   };
 
   return (
@@ -28,13 +34,27 @@ const Index = () => {
               Task<span className="text-blue-600">Flow</span>
             </h1>
             <p className="text-gray-600">Organize your tasks, manage your time, achieve your goals</p>
+            {!user && (
+              <p className="text-sm text-amber-600 mt-2 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                💡 Sign in to save your tasks permanently
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut size={16} className="mr-2" />
-              Sign Out
-            </Button>
+            {user ? (
+              <>
+                <span className="text-sm text-gray-600">Welcome, {user.email}</span>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut size={16} className="mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleSignIn}>
+                <LogIn size={16} className="mr-2" />
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
 

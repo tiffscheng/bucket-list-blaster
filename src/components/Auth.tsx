@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +16,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { signUp, signIn } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +51,7 @@ const Auth = () => {
         title: "Success!",
         description: "You have been signed in.",
       });
+      navigate('/');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -63,11 +67,17 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+              <ArrowLeft size={16} className="mr-2" />
+              Back to App
+            </Button>
+          </div>
           <CardTitle className="text-2xl">
             Task<span className="text-blue-600">Flow</span>
           </CardTitle>
           <CardDescription>
-            Sign in to your account or create a new one
+            Sign in to your account or create a new one to save your tasks
           </CardDescription>
         </CardHeader>
         <CardContent>

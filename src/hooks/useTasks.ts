@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,13 +5,44 @@ import { Task, Subtask } from '@/types/Task';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+const LOCAL_STORAGE_KEY = 'taskflow-tasks';
+
 export const useTasks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
 
-  // Fetch tasks
-  const { data: tasks = [], isLoading } = useQuery({
+  // Load local tasks from localStorage on mount
+  useEffect(() => {
+    if (!user) {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsedTasks = JSON.parse(stored).map((task: any) => ({
+            ...task,
+            due_date: task.due_date ? new Date(task.due_date) : undefined,
+            created_at: new Date(task.created_at),
+            updated_at: task.updated_at ? new Date(task.updated_at) : undefined,
+            last_completed_at: task.last_completed_at ? new Date(task.last_completed_at) : undefined,
+          }));
+          setLocalTasks(parsedTasks);
+        } catch (error) {
+          console.error('Error parsing local tasks:', error);
+          setLocalTasks([]);
+        }
+      }
+    }
+  }, [user]);
+
+  // Save local tasks to localStorage
+  const saveLocalTasks = (tasks: Task[]) => {
+    setLocalTasks(tasks);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+  };
+
+  // Fetch tasks from Supabase (only for authenticated users)
+  const { data: supabaseTasks = [], isLoading } = useQuery({
     queryKey: ['tasks', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -53,7 +83,42 @@ export const useTasks = () => {
     enabled: !!user,
   });
 
-  // Add task mutation
+  // Use either Supabase tasks or local tasks
+  const tasks = user ? supabaseTasks : localTasks;
+
+  // Local task operations
+  const addLocalTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
+    const newTask: Task = {
+      ...taskData,
+      id: crypto.randomUUID(),
+      completed: false,
+      created_at: new Date(),
+      order_index: localTasks.length,
+    };
+    saveLocalTasks([...localTasks, newTask]);
+    toast({
+      title: "Task added locally",
+      description: "Sign in to save your tasks permanently",
+    });
+  };
+
+  const updateLocalTask = (id: string, updates: Partial<Task>) => {
+    const updatedTasks = localTasks.map(task => 
+      task.id === id ? { ...task, ...updates, updated_at: new Date() } : task
+    );
+    saveLocalTasks(updatedTasks);
+  };
+
+  const deleteLocalTask = (id: string) => {
+    const updatedTasks = localTasks.filter(task => task.id !== id);
+    saveLocalTasks(updatedTasks);
+    toast({
+      title: "Task deleted",
+      description: "Task removed from local storage",
+    });
+  };
+
+  // Supabase mutations (only for authenticated users)
   const addTaskMutation = useMutation({
     mutationFn: async (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
       if (!user) throw new Error('User not authenticated');
@@ -79,7 +144,6 @@ export const useTasks = () => {
 
       if (taskError) throw taskError;
 
-      // Add subtasks if any
       if (taskData.subtasks.length > 0) {
         const { error: subtasksError } = await supabase
           .from('subtasks')
@@ -202,16 +266,29 @@ export const useTasks = () => {
     },
   });
 
+  // Main functions that handle both authenticated and non-authenticated users
   const addTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
-    addTaskMutation.mutate(taskData);
+    if (user) {
+      addTaskMutation.mutate(taskData);
+    } else {
+      addLocalTask(taskData);
+    }
   };
 
   const updateTask = (id: string, updates: Partial<Task>) => {
-    updateTaskMutation.mutate({ id, updates });
+    if (user) {
+      updateTaskMutation.mutate({ id, updates });
+    } else {
+      updateLocalTask(id, updates);
+    }
   };
 
   const deleteTask = (id: string) => {
-    deleteTaskMutation.mutate(id);
+    if (user) {
+      deleteTaskMutation.mutate(id);
+    } else {
+      deleteLocalTask(id);
+    }
   };
 
   const toggleTask = (id: string) => {
@@ -219,7 +296,6 @@ export const useTasks = () => {
     if (task) {
       let updates: Partial<Task> = { completed: !task.completed };
       
-      // If completing a recurring task, set last_completed_at and reset completed to false
       if (!task.completed && task.is_recurring) {
         updates = {
           completed: false,
@@ -232,28 +308,46 @@ export const useTasks = () => {
   };
 
   const toggleSubtask = (taskId: string, subtaskId: string) => {
-    toggleSubtaskMutation.mutate({ taskId, subtaskId });
+    if (user) {
+      toggleSubtaskMutation.mutate({ taskId, subtaskId });
+    } else {
+      const updatedTasks = localTasks.map(task => {
+        if (task.id === taskId) {
+          const updatedSubtasks = task.subtasks.map(subtask => 
+            subtask.id === subtaskId ? { ...subtask, completed: !subtask.completed } : subtask
+          );
+          return { ...task, subtasks: updatedSubtasks };
+        }
+        return task;
+      });
+      saveLocalTasks(updatedTasks);
+    }
   };
 
   const reorderTasks = async (newTasks: Task[]) => {
-    const updates = newTasks.map((task, index) => ({
-      id: task.id,
-      order_index: index,
-    }));
+    if (user) {
+      const updates = newTasks.map((task, index) => ({
+        id: task.id,
+        order_index: index,
+      }));
 
-    for (const update of updates) {
-      await supabase
-        .from('tasks')
-        .update({ order_index: update.order_index })
-        .eq('id', update.id);
+      for (const update of updates) {
+        await supabase
+          .from('tasks')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
+    } else {
+      const reorderedTasks = newTasks.map((task, index) => ({ ...task, order_index: index }));
+      saveLocalTasks(reorderedTasks);
     }
-
-    queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
   };
 
   return {
     tasks,
-    isLoading,
+    isLoading: user ? isLoading : false,
     addTask,
     updateTask,
     deleteTask,
