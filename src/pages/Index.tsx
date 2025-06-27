@@ -4,7 +4,7 @@ import TaskManager from '@/components/TaskManager';
 import CalendarView from '@/components/CalendarView';
 import RandomTaskGenerator from '@/components/RandomTaskGenerator';
 import { Button } from '@/components/ui/button';
-import { ListIcon, Calendar, Shuffle, LogOut, LogIn } from 'lucide-react';
+import { ListIcon, Calendar, Shuffle, LogOut, LogIn, LockKeyhole } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -82,7 +82,7 @@ const Index = () => {
             disabled={!user}
             title={!user ? 'Please sign in to use this feature' : ''}
           >
-            <Shuffle size={18} />
+            {!user ? <LockKeyhole size={18} /> : <Shuffle size={18} />}
             Random Task
           </Button>
         </div>
