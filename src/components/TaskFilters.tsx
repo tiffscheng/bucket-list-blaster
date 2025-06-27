@@ -3,9 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState } from 'react';
+import { ChevronDown, X } from 'lucide-react';
 
 interface TaskFiltersProps {
   filters: TTaskFilters;
@@ -25,6 +27,7 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
   const [selectedLabels, setSelectedLabels] = useState<string[]>(
     filters.label ? [filters.label] : []
   );
+  const [labelsOpen, setLabelsOpen] = useState(false);
   
   // Get unique labels from all tasks
   const allLabels = Array.from(new Set(tasks.flatMap(task => task.labels))).sort();
@@ -67,14 +70,25 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
     });
   };
 
-  const handleLabelChange = (label: string, checked: boolean) => {
-    const newLabels = checked 
-      ? [...selectedLabels, label]
-      : selectedLabels.filter(l => l !== label);
+  const handleLabelToggle = (label: string) => {
+    const newLabels = selectedLabels.includes(label)
+      ? selectedLabels.filter(l => l !== label)
+      : [...selectedLabels, label];
     
     setSelectedLabels(newLabels);
     onFiltersChange({
       ...filters,
+      labels: newLabels.length > 0 ? newLabels : undefined,
+      label: newLabels.length === 1 ? newLabels[0] : undefined
+    });
+  };
+
+  const handleRemoveLabel = (labelToRemove: string) => {
+    const newLabels = selectedLabels.filter(l => l !== labelToRemove);
+    setSelectedLabels(newLabels);
+    onFiltersChange({
+      ...filters,
+      labels: newLabels.length > 0 ? newLabels : undefined,
       label: newLabels.length === 1 ? newLabels[0] : undefined
     });
   };
@@ -151,25 +165,68 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
           </div>
         </div>
 
-        {allLabels.length > 0 && (
-          <div>
-            <Label className="text-sm font-medium">Labels</Label>
-            <div className="space-y-2 mt-2 max-h-32 overflow-y-auto">
-              {allLabels.map((label) => (
-                <div key={label} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`label-${label}`}
-                    checked={selectedLabels.includes(label)}
-                    onCheckedChange={(checked) => handleLabelChange(label, !!checked)}
-                  />
-                  <Label htmlFor={`label-${label}`} className="text-sm">
-                    {label}
-                  </Label>
+        <div>
+          <Label className="text-sm font-medium">Labels</Label>
+          <div className="mt-2">
+            <Popover open={labelsOpen} onOpenChange={setLabelsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={labelsOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedLabels.length === 0
+                    ? "Select labels..."
+                    : `${selectedLabels.length} label${selectedLabels.length > 1 ? 's' : ''} selected`}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <div className="max-h-60 overflow-y-auto">
+                  {allLabels.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500">No labels found</div>
+                  ) : (
+                    <div className="p-1">
+                      {allLabels.map((label) => (
+                        <div
+                          key={label}
+                          className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer rounded"
+                          onClick={() => handleLabelToggle(label)}
+                        >
+                          <Checkbox
+                            checked={selectedLabels.includes(label)}
+                            onChange={() => {}} // Handled by parent onClick
+                          />
+                          <span className="text-sm">{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              </PopoverContent>
+            </Popover>
+            
+            {selectedLabels.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {selectedLabels.map((label) => (
+                  <div
+                    key={label}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                  >
+                    {label}
+                    <button
+                      onClick={() => handleRemoveLabel(label)}
+                      className="hover:bg-blue-200 rounded-full p-0.5"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
