@@ -39,7 +39,8 @@ const RandomTaskGenerator = () => {
     // Add some suspense with a delay
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * filteredTasks.length);
-      setSelectedTask(filteredTasks[randomIndex]);
+      const randomTask = filteredTasks[randomIndex];
+      setSelectedTask(randomTask);
       setIsGenerating(false);
     }, 800);
   };

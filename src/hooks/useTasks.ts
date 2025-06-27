@@ -32,8 +32,11 @@ export const useTasks = () => {
 
       if (subtasksError) throw subtasksError;
 
-      const tasksWithSubtasks = tasksData.map(task => ({
+      const tasksWithSubtasks: Task[] = tasksData.map(task => ({
         ...task,
+        priority: task.priority as 'low' | 'medium' | 'high' | 'urgent',
+        effort: task.effort as 'quick' | 'medium' | 'long' | 'massive',
+        recurrence_interval: task.recurrence_interval as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined,
         due_date: task.due_date ? new Date(task.due_date) : undefined,
         created_at: new Date(task.created_at),
         updated_at: task.updated_at ? new Date(task.updated_at) : undefined,
