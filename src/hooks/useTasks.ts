@@ -134,6 +134,7 @@ export const useTasks = () => {
             effort: taskData.effort,
             labels: taskData.labels,
             due_date: taskData.due_date?.toISOString(),
+            bucket_id: taskData.bucket_id,
             order_index: tasks.length,
             is_recurring: taskData.is_recurring,
             recurrence_interval: taskData.recurrence_interval,
@@ -189,6 +190,7 @@ export const useTasks = () => {
           labels: updates.labels,
           due_date: updates.due_date?.toISOString(),
           completed: updates.completed,
+          bucket_id: updates.bucket_id,
           is_recurring: updates.is_recurring,
           recurrence_interval: updates.recurrence_interval,
           last_completed_at: updates.last_completed_at?.toISOString(),
@@ -329,12 +331,16 @@ export const useTasks = () => {
       const updates = newTasks.map((task, index) => ({
         id: task.id,
         order_index: index,
+        bucket_id: task.bucket_id,
       }));
 
       for (const update of updates) {
         await supabase
           .from('tasks')
-          .update({ order_index: update.order_index })
+          .update({ 
+            order_index: update.order_index,
+            bucket_id: update.bucket_id 
+          })
           .eq('id', update.id);
       }
 

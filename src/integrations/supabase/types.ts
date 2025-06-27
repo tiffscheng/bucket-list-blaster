@@ -97,6 +97,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          bucket_id: string | null
           completed: boolean
           created_at: string
           description: string | null
@@ -114,6 +115,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bucket_id?: string | null
           completed?: boolean
           created_at?: string
           description?: string | null
@@ -131,6 +133,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bucket_id?: string | null
           completed?: boolean
           created_at?: string
           description?: string | null
@@ -147,7 +150,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
