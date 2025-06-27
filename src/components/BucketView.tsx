@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
@@ -50,11 +51,11 @@ const BucketView = ({
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
 
-  // Filter to show only active (non-completed) tasks
+  // Filter tasks for each bucket - General bucket shows tasks with no bucket_id
   const getFilteredTasksForBucket = (bucket: any) => {
     if (bucket.is_default) {
-      // General bucket shows tasks with no bucket_id or matching bucket_id
-      return tasks.filter(task => !task.bucket_id || task.bucket_id === bucket.id);
+      // General bucket shows tasks with no bucket_id or null bucket_id
+      return tasks.filter(task => !task.bucket_id);
     }
     return tasks.filter(task => task.bucket_id === bucket.id);
   };
@@ -168,7 +169,7 @@ const BucketView = ({
                 }
               `}
               style={{ 
-                backgroundColor: bucket.color + '15', // Add transparency to the bucket color
+                backgroundColor: bucket.color,
                 borderColor: draggedOverBucket === bucket.id && draggedTask ? '#60a5fa' : bucket.color
               }}
               onDragOver={(e) => handleTaskDragOver(e, bucket.id)}
@@ -176,14 +177,8 @@ const BucketView = ({
               onDrop={(e) => handleTaskDrop(e, bucket.id)}
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-700">{bucket.name}</h3>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: bucket.color }}
-                  />
-                  <span className="text-sm text-gray-500">({bucketTasks.length})</span>
-                </div>
+                <h3 className="text-lg font-semibold text-white">{bucket.name}</h3>
+                <span className="text-sm text-white/80">({bucketTasks.length})</span>
               </div>
               
               <div className="space-y-2">
@@ -204,7 +199,7 @@ const BucketView = ({
                   </div>
                 ))}
                 {bucketTasks.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
+                  <div className="text-center py-8 text-white/60">
                     <p className="text-sm">No tasks in this bucket</p>
                     <p className="text-xs mt-1">Drag tasks here to organize them</p>
                   </div>
