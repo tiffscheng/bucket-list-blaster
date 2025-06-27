@@ -13,6 +13,7 @@ interface TaskListProps {
   onToggleTask: (id: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
+  onDuplicateTask: (task: Task) => void;
   onReorderTasks: (tasks: Task[]) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
@@ -24,6 +25,7 @@ const TaskList = ({
   onToggleTask, 
   onEditTask, 
   onDeleteTask,
+  onDuplicateTask,
   onReorderTasks,
   onToggleSubtask
 }: TaskListProps) => {
@@ -145,6 +147,7 @@ const TaskList = ({
               onToggleTask={onToggleTask}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
+              onDuplicateTask={onDuplicateTask}
               onReorderTasks={onReorderTasks}
               onToggleSubtask={onToggleSubtask}
             />
@@ -177,6 +180,7 @@ const TaskList = ({
                     onToggle={onToggleTask}
                     onEdit={onEditTask}
                     onDelete={onDeleteTask}
+                    onDuplicate={onDuplicateTask}
                     onToggleSubtask={onToggleSubtask}
                   />
                 </div>
@@ -199,6 +203,7 @@ const TaskList = ({
                 onToggle={onToggleTask}
                 onEdit={onEditTask}
                 onDelete={onDeleteTask}
+                onDuplicate={onDuplicateTask}
                 onToggleSubtask={onToggleSubtask}
               />
             ))}

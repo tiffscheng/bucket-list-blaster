@@ -1,8 +1,7 @@
-
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Trash2, Calendar, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
+import { Edit, Trash2, Calendar, ChevronDown, ChevronRight, RotateCcw, Copy } from 'lucide-react';
 import { Task } from '@/types/Task';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -13,10 +12,11 @@ interface TaskItemProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (task: Task) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
-const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskItemProps) => {
+const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubtask }: TaskItemProps) => {
   const [showSubtasks, setShowSubtasks] = useState(false);
 
   // Safely display user content by sanitizing it
@@ -181,6 +181,14 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
             className="h-8 w-8 p-0"
           >
             <Edit size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDuplicate(task)}
+            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Copy size={14} />
           </Button>
           <Button
             variant="ghost"

@@ -27,6 +27,25 @@ const TaskManager = () => {
     }
   };
 
+  const handleDuplicateTask = (task: Task) => {
+    const duplicatedTask = {
+      title: `${task.title} (Copy)`,
+      description: task.description,
+      priority: task.priority,
+      effort: task.effort,
+      labels: [...task.labels],
+      due_date: task.due_date,
+      subtasks: task.subtasks.map(subtask => ({
+        id: crypto.randomUUID(),
+        title: subtask.title,
+        completed: false
+      })),
+      is_recurring: task.is_recurring,
+      recurrence_interval: task.recurrence_interval,
+    };
+    addTask(duplicatedTask);
+  };
+
   return (
     <div className="p-6">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -56,6 +75,7 @@ const TaskManager = () => {
             onToggleTask={toggleTask}
             onEditTask={setEditingTask}
             onDeleteTask={deleteTask}
+            onDuplicateTask={handleDuplicateTask}
             onReorderTasks={reorderTasks}
             onToggleSubtask={toggleSubtask}
           />
