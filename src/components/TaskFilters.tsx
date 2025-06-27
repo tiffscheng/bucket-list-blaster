@@ -221,7 +221,7 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
                       onClick={clearAllLabels}
                       className="w-full text-left justify-start h-8"
                     >
-                      See All
+                      Clear Selections
                     </Button>
                   </>
                 )}
