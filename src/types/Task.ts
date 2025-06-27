@@ -1,4 +1,10 @@
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -10,6 +16,7 @@ export interface Task {
   completed: boolean;
   createdAt: Date;
   order: number;
+  subtasks: Subtask[];
 }
 
 export interface TaskFilters {

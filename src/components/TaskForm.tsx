@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { X, Calendar as CalendarIcon } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Task } from '@/types/Task';
+import { Task, Subtask } from '@/types/Task';
 
 interface TaskFormProps {
   task?: Task | null;
@@ -26,8 +25,10 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     effort: 'medium' as 'quick' | 'medium' | 'long' | 'massive',
     labels: [] as string[],
     dueDate: undefined as Date | undefined,
+    subtasks: [] as Subtask[],
   });
   const [newLabel, setNewLabel] = useState('');
+  const [newSubtask, setNewSubtask] = useState('');
 
   useEffect(() => {
     if (task) {
@@ -38,6 +39,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         effort: task.effort,
         labels: [...task.labels],
         dueDate: task.dueDate,
+        subtasks: [...task.subtasks],
       });
     }
   }, [task]);
@@ -63,6 +65,28 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     setFormData(prev => ({
       ...prev,
       labels: prev.labels.filter(l => l !== label)
+    }));
+  };
+
+  const addSubtask = () => {
+    if (newSubtask.trim()) {
+      const subtask: Subtask = {
+        id: crypto.randomUUID(),
+        title: newSubtask.trim(),
+        completed: false,
+      };
+      setFormData(prev => ({
+        ...prev,
+        subtasks: [...prev.subtasks, subtask]
+      }));
+      setNewSubtask('');
+    }
+  };
+
+  const removeSubtask = (subtaskId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subtasks: prev.subtasks.filter(s => s.id !== subtaskId)
     }));
   };
 
@@ -181,6 +205,36 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                     onClick={() => removeLabel(label)}
                   />
                 </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>Subtasks</Label>
+            <div className="flex gap-2 mb-2">
+              <Input
+                value={newSubtask}
+                onChange={(e) => setNewSubtask(e.target.value)}
+                placeholder="Add subtask..."
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSubtask())}
+              />
+              <Button type="button" onClick={addSubtask} variant="outline">
+                <Plus size={16} />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {formData.subtasks.map((subtask) => (
+                <div
+                  key={subtask.id}
+                  className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
+                >
+                  <span className="text-sm">{subtask.title}</span>
+                  <X
+                    size={14}
+                    className="cursor-pointer hover:text-red-600"
+                    onClick={() => removeSubtask(subtask.id)}
+                  />
+                </div>
               ))}
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Task } from '@/types/Task';
 
@@ -10,11 +9,12 @@ export const useTasks = () => {
     const savedTasks = localStorage.getItem('taskflow-tasks');
     if (savedTasks) {
       const parsedTasks = JSON.parse(savedTasks);
-      // Convert date strings back to Date objects
+      // Convert date strings back to Date objects and ensure subtasks exist
       const tasksWithDates = parsedTasks.map((task: any) => ({
         ...task,
         dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
         createdAt: new Date(task.createdAt),
+        subtasks: task.subtasks || [], // Ensure subtasks exist for backward compatibility
       }));
       setTasks(tasksWithDates);
     }
@@ -52,6 +52,21 @@ export const useTasks = () => {
     ));
   };
 
+  const toggleSubtask = (taskId: string, subtaskId: string) => {
+    setTasks(prev => prev.map(task =>
+      task.id === taskId 
+        ? {
+            ...task,
+            subtasks: task.subtasks.map(subtask =>
+              subtask.id === subtaskId 
+                ? { ...subtask, completed: !subtask.completed }
+                : subtask
+            )
+          }
+        : task
+    ));
+  };
+
   const reorderTasks = (newTasks: Task[]) => {
     const tasksWithOrder = newTasks.map((task, index) => ({
       ...task,
@@ -66,6 +81,7 @@ export const useTasks = () => {
     updateTask,
     deleteTask,
     toggleTask,
+    toggleSubtask,
     reorderTasks,
   };
 };

@@ -1,19 +1,22 @@
-
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Trash2, Calendar } from 'lucide-react';
+import { Edit, Trash2, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import { Task } from '@/types/Task';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
-const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
+const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskItemProps) => {
+  const [showSubtasks, setShowSubtasks] = useState(false);
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
@@ -48,6 +51,8 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
   };
 
   const dueDateStatus = getDueDateStatus();
+  const completedSubtasks = task.subtasks.filter(s => s.completed).length;
+  const totalSubtasks = task.subtasks.length;
 
   return (
     <div className={cn(
@@ -82,6 +87,12 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
             <span className="text-sm text-gray-500 flex items-center gap-1">
               {getEffortIcon(task.effort)} {task.effort}
             </span>
+
+            {totalSubtasks > 0 && (
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                {completedSubtasks}/{totalSubtasks} subtasks
+              </span>
+            )}
           </div>
 
           {task.description && (
@@ -93,7 +104,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             {task.labels.map((label) => (
               <span
                 key={label}
@@ -113,6 +124,40 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
               </span>
             )}
           </div>
+
+          {totalSubtasks > 0 && (
+            <div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSubtasks(!showSubtasks)}
+                className="p-0 h-auto text-xs text-gray-600 hover:text-gray-800"
+              >
+                {showSubtasks ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                {showSubtasks ? 'Hide' : 'Show'} subtasks
+              </Button>
+
+              {showSubtasks && (
+                <div className="mt-2 space-y-1 pl-4 border-l-2 border-gray-200">
+                  {task.subtasks.map((subtask) => (
+                    <div key={subtask.id} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={subtask.completed}
+                        onCheckedChange={() => onToggleSubtask?.(task.id, subtask.id)}
+                        className="h-3 w-3"
+                      />
+                      <span className={cn(
+                        "text-sm",
+                        subtask.completed ? "line-through text-gray-400" : "text-gray-700"
+                      )}>
+                        {subtask.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-1">

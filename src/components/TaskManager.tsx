@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import TaskForm from './TaskForm';
@@ -9,7 +8,7 @@ import { Plus } from 'lucide-react';
 import { Task, TaskFilters as TTaskFilters } from '@/types/Task';
 
 const TaskManager = () => {
-  const { tasks, addTask, updateTask, deleteTask, toggleTask, reorderTasks } = useTasks();
+  const { tasks, addTask, updateTask, deleteTask, toggleTask, toggleSubtask, reorderTasks } = useTasks();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [filters, setFilters] = useState<TTaskFilters>({});
@@ -57,6 +56,7 @@ const TaskManager = () => {
             onEditTask={setEditingTask}
             onDeleteTask={deleteTask}
             onReorderTasks={reorderTasks}
+            onToggleSubtask={toggleSubtask}
           />
         </div>
       </div>

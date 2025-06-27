@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import TaskItem from './TaskItem';
 import { Task, TaskFilters } from '@/types/Task';
@@ -11,6 +10,7 @@ interface TaskListProps {
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
   onReorderTasks: (tasks: Task[]) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
 const TaskList = ({ 
@@ -20,7 +20,8 @@ const TaskList = ({
   onToggleTask, 
   onEditTask, 
   onDeleteTask,
-  onReorderTasks 
+  onReorderTasks,
+  onToggleSubtask
 }: TaskListProps) => {
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
@@ -77,6 +78,7 @@ const TaskList = ({
                 onToggle={onToggleTask}
                 onEdit={onEditTask}
                 onDelete={onDeleteTask}
+                onToggleSubtask={onToggleSubtask}
               />
             ))}
           </div>
@@ -96,6 +98,7 @@ const TaskList = ({
                 onToggle={onToggleTask}
                 onEdit={onEditTask}
                 onDelete={onDeleteTask}
+                onToggleSubtask={onToggleSubtask}
               />
             ))}
           </div>
