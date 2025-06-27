@@ -22,6 +22,7 @@ const BucketView = ({
   onToggleSubtask 
 }: BucketViewProps) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
 
   // Group tasks by priority
   const taskBuckets = {
@@ -48,11 +49,20 @@ const BucketView = ({
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, bucketPriority: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    setDraggedOverBucket(bucketPriority);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the entire bucket
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDraggedOverBucket(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, targetPriority: string) => {
@@ -66,10 +76,12 @@ const BucketView = ({
     
     onReorderTasks(updatedTasks);
     setDraggedTask(null);
+    setDraggedOverBucket(null);
   };
 
   const handleDragEnd = () => {
     setDraggedTask(null);
+    setDraggedOverBucket(null);
   };
 
   return (
@@ -78,10 +90,17 @@ const BucketView = ({
         <div
           key={priority}
           className={cn(
-            "p-4 rounded-lg border-2 border-dashed min-h-[200px]",
-            bucketColors[priority as keyof typeof bucketColors]
+            "p-4 rounded-lg border-2 border-dashed min-h-[200px] transition-all duration-200",
+            bucketColors[priority as keyof typeof bucketColors],
+            draggedOverBucket === priority && draggedTask?.priority !== priority
+              ? "border-blue-400 bg-blue-50 scale-102 shadow-lg"
+              : "",
+            draggedTask?.priority === priority && draggedOverBucket !== priority
+              ? "opacity-75"
+              : ""
           )}
-          onDragOver={handleDragOver}
+          onDragOver={(e) => handleDragOver(e, priority)}
+          onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, priority)}
         >
           <h4 className="font-semibold text-gray-700 mb-3 text-center">
@@ -96,8 +115,10 @@ const BucketView = ({
                 onDragStart={(e) => handleDragStart(e, task)}
                 onDragEnd={handleDragEnd}
                 className={cn(
-                  "cursor-move transition-opacity",
-                  draggedTask?.id === task.id ? "opacity-50" : "opacity-100"
+                  "cursor-move transition-all duration-200 ease-in-out",
+                  draggedTask?.id === task.id 
+                    ? "opacity-50 scale-95 rotate-1 shadow-lg" 
+                    : "opacity-100 scale-100 rotate-0 hover:shadow-sm"
                 )}
               >
                 <TaskItem

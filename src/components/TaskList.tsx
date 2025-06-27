@@ -29,6 +29,7 @@ const TaskList = ({
 }: TaskListProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'buckets'>('list');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
@@ -64,11 +65,20 @@ const TaskList = ({
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    setDraggedOverIndex(index);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the entire drop zone
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDraggedOverIndex(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, targetIndex: number) => {
@@ -84,10 +94,12 @@ const TaskList = ({
 
     onReorderTasks(reorderedTasks);
     setDraggedTask(null);
+    setDraggedOverIndex(null);
   };
 
   const handleDragEnd = () => {
     setDraggedTask(null);
+    setDraggedOverIndex(null);
   };
 
   if (filteredAndSortedTasks.length === 0) {
@@ -143,12 +155,22 @@ const TaskList = ({
                   key={task.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, task)}
-                  onDragOver={handleDragOver}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
-                  className={`cursor-move transition-opacity ${
-                    draggedTask?.id === task.id ? 'opacity-50' : 'opacity-100'
-                  }`}
+                  className={`
+                    transition-all duration-200 ease-in-out cursor-move
+                    ${draggedTask?.id === task.id 
+                      ? 'opacity-50 scale-95 rotate-1 shadow-lg' 
+                      : 'opacity-100 scale-100 rotate-0'
+                    }
+                    ${draggedOverIndex === index && draggedTask?.id !== task.id
+                      ? 'transform translate-y-1 shadow-md border-2 border-blue-300 border-dashed'
+                      : ''
+                    }
+                    hover:shadow-sm
+                  `}
                 >
                   <TaskItem
                     task={task}

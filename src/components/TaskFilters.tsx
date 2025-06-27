@@ -2,12 +2,14 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TaskFiltersProps {
   filters: TTaskFilters;
@@ -29,21 +31,34 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
   );
   const [labelsOpen, setLabelsOpen] = useState(false);
   
-  // Get unique labels from all tasks
+  // Get unique labels from all tasks and update when tasks change
   const allLabels = Array.from(new Set(tasks.flatMap(task => task.labels))).sort();
 
+  // Update selected labels when tasks change (to remove labels that no longer exist)
+  useEffect(() => {
+    const validLabels = selectedLabels.filter(label => allLabels.includes(label));
+    if (validLabels.length !== selectedLabels.length) {
+      setSelectedLabels(validLabels);
+      onFiltersChange({
+        ...filters,
+        labels: validLabels.length > 0 ? validLabels : undefined,
+        label: validLabels.length === 1 ? validLabels[0] : undefined
+      });
+    }
+  }, [allLabels, selectedLabels, filters, onFiltersChange]);
+
   const priorities = [
-    { value: 'urgent', label: 'Urgent' },
-    { value: 'high', label: 'High' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'low', label: 'Low' }
+    { value: 'urgent', label: 'Urgent', color: 'bg-red-500 text-white' },
+    { value: 'high', label: 'High', color: 'bg-orange-500 text-white' },
+    { value: 'medium', label: 'Medium', color: 'bg-yellow-500 text-white' },
+    { value: 'low', label: 'Low', color: 'bg-green-500 text-white' }
   ];
 
   const efforts = [
-    { value: 'quick', label: 'Quick' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'long', label: 'Long' },
-    { value: 'massive', label: 'Massive' }
+    { value: 'quick', label: 'Quick', color: 'bg-blue-500 text-white' },
+    { value: 'medium', label: 'Medium', color: 'bg-purple-500 text-white' },
+    { value: 'long', label: 'Long', color: 'bg-pink-500 text-white' },
+    { value: 'massive', label: 'Massive', color: 'bg-gray-500 text-white' }
   ];
 
   const handlePriorityChange = (priority: string, checked: boolean) => {
@@ -130,37 +145,39 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
         </div>
 
         <div>
-          <Label className="text-sm font-medium">Priority</Label>
-          <div className="space-y-2 mt-2">
+          <Label className="text-sm font-medium mb-2 block">Priority</Label>
+          <div className="flex flex-wrap gap-2">
             {priorities.map((priority) => (
-              <div key={priority.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`priority-${priority.value}`}
-                  checked={selectedPriorities.includes(priority.value)}
-                  onCheckedChange={(checked) => handlePriorityChange(priority.value, !!checked)}
-                />
-                <Label htmlFor={`priority-${priority.value}`} className="text-sm">
-                  {priority.label}
-                </Label>
-              </div>
+              <Badge
+                key={priority.value}
+                variant={selectedPriorities.includes(priority.value) ? "default" : "outline"}
+                className={cn(
+                  "cursor-pointer transition-all hover:scale-105",
+                  selectedPriorities.includes(priority.value) ? priority.color : "hover:bg-gray-100"
+                )}
+                onClick={() => handlePriorityChange(priority.value, !selectedPriorities.includes(priority.value))}
+              >
+                {priority.label}
+              </Badge>
             ))}
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-medium">Effort</Label>
-          <div className="space-y-2 mt-2">
+          <Label className="text-sm font-medium mb-2 block">Effort</Label>
+          <div className="flex flex-wrap gap-2">
             {efforts.map((effort) => (
-              <div key={effort.value} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`effort-${effort.value}`}
-                  checked={selectedEfforts.includes(effort.value)}
-                  onCheckedChange={(checked) => handleEffortChange(effort.value, !!checked)}
-                />
-                <Label htmlFor={`effort-${effort.value}`} className="text-sm">
-                  {effort.label}
-                </Label>
-              </div>
+              <Badge
+                key={effort.value}
+                variant={selectedEfforts.includes(effort.value) ? "default" : "outline"}
+                className={cn(
+                  "cursor-pointer transition-all hover:scale-105",
+                  selectedEfforts.includes(effort.value) ? effort.color : "hover:bg-gray-100"
+                )}
+                onClick={() => handleEffortChange(effort.value, !selectedEfforts.includes(effort.value))}
+              >
+                {effort.label}
+              </Badge>
             ))}
           </div>
         </div>
