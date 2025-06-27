@@ -79,6 +79,8 @@ const Index = () => {
             onClick={() => setCurrentView('random')}
             variant={currentView === 'random' ? 'default' : 'outline'}
             className="flex items-center gap-2"
+            disabled={!user}
+            title={!user ? 'Please sign in to use this feature' : ''}
           >
             <Shuffle size={18} />
             Random Task
