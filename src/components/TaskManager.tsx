@@ -15,16 +15,6 @@ const TaskManager = () => {
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
   const [filters, setFilters] = useState<TTaskFilters>({});
   const [sortBy, setSortBy] = useState<'manual' | 'priority' | 'effort' | 'dueDate'>('manual');
-  const [availableLabels, setAvailableLabels] = useState<string[]>([]);
-
-  // Update available labels whenever tasks change
-  useEffect(() => {
-    const allLabels = new Set<string>();
-    tasks.forEach(task => {
-      task.labels.forEach(label => allLabels.add(label));
-    });
-    setAvailableLabels(Array.from(allLabels).sort());
-  }, [tasks]);
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     addTask(taskData);
@@ -92,7 +82,6 @@ const TaskManager = () => {
               onFiltersChange={setFilters}
               sortBy={sortBy}
               onSortChange={setSortBy}
-              availableLabels={availableLabels}
             />
           </div>
         </div>
@@ -117,7 +106,6 @@ const TaskManager = () => {
           task={editingTask || duplicatingTask}
           onSubmit={editingTask ? handleEditTask : handleAddTask}
           onCancel={handleCancelForm}
-          availableLabels={availableLabels}
         />
       )}
     </div>
