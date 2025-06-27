@@ -36,7 +36,7 @@ const Index = () => {
             <p className="text-gray-600">Organize your tasks, manage your time, achieve your goals</p>
             {!user && (
               <p className="text-sm text-amber-600 mt-2 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-                💡 Please sign in to save your tasks and unlock the full app experience.
+                💡 Please sign in to save your tasks and unlock the full experience.
               </p>
             )}
           </div>
