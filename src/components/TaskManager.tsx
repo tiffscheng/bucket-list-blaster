@@ -12,12 +12,14 @@ const TaskManager = () => {
   const { tasks, addTask, updateTask, deleteTask, toggleTask, toggleSubtask, reorderTasks } = useTasks();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
   const [filters, setFilters] = useState<TTaskFilters>({});
   const [sortBy, setSortBy] = useState<'manual' | 'priority' | 'effort' | 'dueDate'>('manual');
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     addTask(taskData);
     setShowForm(false);
+    setDuplicatingTask(null);
   };
 
   const handleEditTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
@@ -28,7 +30,7 @@ const TaskManager = () => {
   };
 
   const handleDuplicateTask = (task: Task) => {
-    const duplicatedTask = {
+    const duplicatedTaskData = {
       title: `${task.title} (Copy)`,
       description: task.description,
       priority: task.priority,
@@ -42,8 +44,24 @@ const TaskManager = () => {
       })),
       is_recurring: task.is_recurring,
       recurrence_interval: task.recurrence_interval,
+      user_id: task.user_id,
+      updated_at: task.updated_at,
     };
-    addTask(duplicatedTask);
+    
+    // Create a mock task object for the form
+    setDuplicatingTask({
+      ...duplicatedTaskData,
+      id: 'duplicate-temp',
+      completed: false,
+      created_at: new Date(),
+      order_index: 0
+    });
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingTask(null);
+    setDuplicatingTask(null);
   };
 
   return (
@@ -82,14 +100,11 @@ const TaskManager = () => {
         </div>
       </div>
 
-      {(showForm || editingTask) && (
+      {(showForm || editingTask || duplicatingTask) && (
         <TaskForm
-          task={editingTask}
+          task={editingTask || duplicatingTask}
           onSubmit={editingTask ? handleEditTask : handleAddTask}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingTask(null);
-          }}
+          onCancel={handleCancelForm}
         />
       )}
     </div>

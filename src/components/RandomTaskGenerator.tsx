@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Shuffle, Sparkles } from 'lucide-react';
 import { Task, TaskFilters } from '@/types/Task';
 import TaskItem from './TaskItem';
+import TaskForm from './TaskForm';
 
 const RandomTaskGenerator = () => {
   const { tasks, updateTask, deleteTask, toggleTask, addTask } = useTasks();
   const [filters, setFilters] = useState<TaskFilters>({});
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
 
   const allLabels = Array.from(new Set(tasks.flatMap(task => task.labels))).sort();
   const activeTasks = tasks.filter(task => !task.completed);
@@ -45,7 +47,7 @@ const RandomTaskGenerator = () => {
   };
 
   const handleDuplicateTask = (task: Task) => {
-    const duplicatedTask = {
+    const duplicatedTaskData = {
       title: `${task.title} (Copy)`,
       description: task.description,
       priority: task.priority,
@@ -59,8 +61,23 @@ const RandomTaskGenerator = () => {
       })),
       is_recurring: task.is_recurring,
       recurrence_interval: task.recurrence_interval,
+      user_id: task.user_id,
+      updated_at: task.updated_at,
     };
-    addTask(duplicatedTask);
+    
+    // Create a mock task object for the form
+    setDuplicatingTask({
+      ...duplicatedTaskData,
+      id: 'duplicate-temp',
+      completed: false,
+      created_at: new Date(),
+      order_index: 0
+    });
+  };
+
+  const handleSubmitDuplicate = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
+    addTask(taskData);
+    setDuplicatingTask(null);
   };
 
   const clearFilters = () => {
@@ -213,6 +230,14 @@ const RandomTaskGenerator = () => {
               />
             </div>
           </div>
+        )}
+
+        {duplicatingTask && (
+          <TaskForm
+            task={duplicatingTask}
+            onSubmit={handleSubmitDuplicate}
+            onCancel={() => setDuplicatingTask(null)}
+          />
         )}
 
         {filteredTasksCount === 0 && activeTasks.length > 0 && (
