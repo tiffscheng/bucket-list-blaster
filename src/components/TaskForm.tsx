@@ -22,8 +22,8 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 'medium' as const,
-    effort: 'medium' as const,
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+    effort: 'medium' as 'quick' | 'medium' | 'long' | 'massive',
     labels: [] as string[],
     dueDate: undefined as Date | undefined,
   });
