@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import TaskItem from './TaskItem';
 import { Task } from '@/types/Task';
@@ -8,15 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, GripVertical } from 'lucide-react';
-
-interface CustomBucket {
-  id: string;
-  name: string;
-  color: string;
-  priority?: string;
-  order: number;
-  isDefault?: boolean;
-}
+import { useBuckets } from '@/hooks/useBuckets';
 
 interface BucketViewProps {
   tasks: Task[];
@@ -35,32 +26,26 @@ const BucketView = ({
   onReorderTasks,
   onToggleSubtask 
 }: BucketViewProps) => {
+  const { buckets, addBucket, updateBucket, deleteBucket, reorderBuckets } = useBuckets();
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
-  const [draggedBucket, setDraggedBucket] = useState<CustomBucket | null>(null);
+  const [draggedBucket, setDraggedBucket] = useState<any>(null);
   const [draggedOverBucketOrder, setDraggedOverBucketOrder] = useState<number | null>(null);
-  
-  const [buckets, setBuckets] = useState<CustomBucket[]>([
-    { id: 'general', name: 'General Tasks', color: '#3b82f6', order: 0, isDefault: true },
-  ]);
   
   const [newBucketName, setNewBucketName] = useState('');
   const [newBucketColor, setNewBucketColor] = useState('#3b82f6');
   const [isAddingBucket, setIsAddingBucket] = useState(false);
-  const [editingBucket, setEditingBucket] = useState<CustomBucket | null>(null);
+  const [editingBucket, setEditingBucket] = useState<any>(null);
 
-  const sortedBuckets = [...buckets].sort((a, b) => a.order - b.order);
+  const sortedBuckets = [...buckets].sort((a, b) => a.order_index - b.order_index);
 
-  const getTasksForBucket = (bucket: CustomBucket) => {
-    if (bucket.priority) {
-      return tasks.filter(task => task.priority === bucket.priority);
-    }
-    if (bucket.isDefault) {
+  const getTasksForBucket = (bucket: any) => {
+    if (bucket.is_default) {
       // Default bucket shows tasks without specific labels or with the bucket name as label
       return tasks.filter(task => 
         task.labels.length === 0 || 
         task.labels.includes(bucket.name) ||
-        !buckets.some(b => !b.isDefault && task.labels.includes(b.name))
+        !buckets.some(b => !b.is_default && task.labels.includes(b.name))
       );
     }
     // For custom buckets, we'll use labels to categorize tasks
@@ -70,34 +55,29 @@ const BucketView = ({
   const addCustomBucket = () => {
     if (!newBucketName.trim()) return;
     
-    const maxOrder = Math.max(...buckets.map(b => b.order), -1);
-    const newBucket: CustomBucket = {
-      id: crypto.randomUUID(),
+    const maxOrder = Math.max(...buckets.map(b => b.order_index), -1);
+    addBucket({
       name: newBucketName.trim(),
       color: newBucketColor,
-      order: maxOrder + 1,
-    };
+      order_index: maxOrder + 1,
+      is_default: false,
+    });
     
-    setBuckets([...buckets, newBucket]);
     setNewBucketName('');
     setNewBucketColor('#3b82f6');
     setIsAddingBucket(false);
   };
 
-  const updateBucket = (bucketId: string, updates: Partial<CustomBucket>) => {
-    setBuckets(buckets => 
-      buckets.map(bucket => 
-        bucket.id === bucketId ? { ...bucket, ...updates } : bucket
-      )
-    );
+  const handleUpdateBucket = (bucketId: string, updates: any) => {
+    updateBucket(bucketId, updates);
     setEditingBucket(null);
   };
 
-  const deleteBucket = (bucketId: string) => {
+  const handleDeleteBucket = (bucketId: string) => {
     const bucketToDelete = buckets.find(b => b.id === bucketId);
-    if (bucketToDelete?.isDefault) return; // Prevent deleting default bucket
+    if (bucketToDelete?.is_default) return; // Prevent deleting default bucket
     
-    setBuckets(buckets => buckets.filter(bucket => bucket.id !== bucketId));
+    deleteBucket(bucketId);
   };
 
   const handleTaskDragStart = (e: React.DragEvent, task: Task) => {
@@ -118,16 +98,14 @@ const BucketView = ({
     }
   };
 
-  const handleTaskDrop = (e: React.DragEvent, bucket: CustomBucket) => {
+  const handleTaskDrop = (e: React.DragEvent, bucket: any) => {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedTask) return;
 
     let updatedTask = { ...draggedTask };
     
-    if (bucket.priority) {
-      updatedTask.priority = bucket.priority as Task['priority'];
-    } else if (!bucket.isDefault) {
+    if (!bucket.is_default) {
       // For custom buckets, add the bucket name as a label
       if (!updatedTask.labels.includes(bucket.name)) {
         updatedTask.labels = [...updatedTask.labels, bucket.name];
@@ -142,7 +120,7 @@ const BucketView = ({
     setDraggedOverBucket(null);
   };
 
-  const handleBucketDragStart = (e: React.DragEvent, bucket: CustomBucket) => {
+  const handleBucketDragStart = (e: React.DragEvent, bucket: any) => {
     setDraggedBucket(bucket);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', '');
@@ -157,29 +135,29 @@ const BucketView = ({
   const handleBucketDrop = (e: React.DragEvent, targetOrder: number) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggedBucket || draggedBucket.order === targetOrder) return;
+    if (!draggedBucket || draggedBucket.order_index === targetOrder) return;
 
     const updatedBuckets = buckets.map(bucket => {
       if (bucket.id === draggedBucket.id) {
-        return { ...bucket, order: targetOrder };
+        return { ...bucket, order_index: targetOrder };
       }
       
-      if (draggedBucket.order < targetOrder) {
+      if (draggedBucket.order_index < targetOrder) {
         // Moving down: shift buckets between old and new position up
-        if (bucket.order > draggedBucket.order && bucket.order <= targetOrder) {
-          return { ...bucket, order: bucket.order - 1 };
+        if (bucket.order_index > draggedBucket.order_index && bucket.order_index <= targetOrder) {
+          return { ...bucket, order_index: bucket.order_index - 1 };
         }
       } else {
         // Moving up: shift buckets between new and old position down
-        if (bucket.order >= targetOrder && bucket.order < draggedBucket.order) {
-          return { ...bucket, order: bucket.order + 1 };
+        if (bucket.order_index >= targetOrder && bucket.order_index < draggedBucket.order_index) {
+          return { ...bucket, order_index: bucket.order_index + 1 };
         }
       }
       
       return bucket;
     });
 
-    setBuckets(updatedBuckets);
+    reorderBuckets(updatedBuckets);
     setDraggedBucket(null);
     setDraggedOverBucketOrder(null);
   };
@@ -259,8 +237,8 @@ const BucketView = ({
               key={bucket.id}
               draggable
               onDragStart={(e) => handleBucketDragStart(e, bucket)}
-              onDragOver={(e) => handleBucketDragOver(e, bucket.order)}
-              onDrop={(e) => handleBucketDrop(e, bucket.order)}
+              onDragOver={(e) => handleBucketDragOver(e, bucket.order_index)}
+              onDrop={(e) => handleBucketDrop(e, bucket.order_index)}
               onDragEnd={handleDragEnd}
               className={cn(
                 "p-4 rounded-lg border-2 border-dashed min-h-[200px] transition-all duration-200 cursor-grab active:cursor-grabbing",
@@ -270,7 +248,7 @@ const BucketView = ({
                 draggedTask && bucketTasks.some(t => t.id === draggedTask.id) && draggedOverBucket !== bucket.id
                   ? "opacity-75"
                   : "",
-                draggedOverBucketOrder === bucket.order && draggedBucket
+                draggedOverBucketOrder === bucket.order_index && draggedBucket
                   ? "border-blue-400 scale-105"
                   : ""
               )}
@@ -297,11 +275,11 @@ const BucketView = ({
                   >
                     <Edit size={14} />
                   </Button>
-                  {!bucket.isDefault && (
+                  {!bucket.is_default && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => deleteBucket(bucket.id)}
+                      onClick={() => handleDeleteBucket(bucket.id)}
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -370,7 +348,7 @@ const BucketView = ({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => updateBucket(editingBucket.id, editingBucket)}>
+                <Button onClick={() => handleUpdateBucket(editingBucket.id, editingBucket)}>
                   Update
                 </Button>
                 <Button variant="outline" onClick={() => setEditingBucket(null)}>
