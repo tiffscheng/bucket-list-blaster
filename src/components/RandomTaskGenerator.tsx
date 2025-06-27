@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Task, TaskFilters } from '@/types/Task';
 import TaskItem from './TaskItem';
 
 const RandomTaskGenerator = () => {
-  const { tasks, updateTask, deleteTask, toggleTask } = useTasks();
+  const { tasks, updateTask, deleteTask, toggleTask, addTask } = useTasks();
   const [filters, setFilters] = useState<TaskFilters>({});
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,6 +42,25 @@ const RandomTaskGenerator = () => {
       setSelectedTask(randomTask);
       setIsGenerating(false);
     }, 800);
+  };
+
+  const handleDuplicateTask = (task: Task) => {
+    const duplicatedTask = {
+      title: `${task.title} (Copy)`,
+      description: task.description,
+      priority: task.priority,
+      effort: task.effort,
+      labels: [...task.labels],
+      due_date: task.due_date,
+      subtasks: task.subtasks.map(subtask => ({
+        id: crypto.randomUUID(),
+        title: subtask.title,
+        completed: false
+      })),
+      is_recurring: task.is_recurring,
+      recurrence_interval: task.recurrence_interval,
+    };
+    addTask(duplicatedTask);
   };
 
   const clearFilters = () => {
@@ -191,6 +209,7 @@ const RandomTaskGenerator = () => {
                 onToggle={toggleTask}
                 onEdit={(task) => updateTask(task.id, task)}
                 onDelete={deleteTask}
+                onDuplicate={handleDuplicateTask}
               />
             </div>
           </div>

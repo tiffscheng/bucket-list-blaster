@@ -14,6 +14,7 @@ interface BucketViewProps {
   onToggleTask: (id: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
+  onDuplicateTask: (task: Task) => void;
   onReorderTasks: (tasks: Task[]) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
@@ -23,6 +24,7 @@ const BucketView = ({
   onToggleTask, 
   onEditTask, 
   onDeleteTask, 
+  onDuplicateTask,
   onReorderTasks,
   onToggleSubtask 
 }: BucketViewProps) => {
@@ -306,6 +308,7 @@ const BucketView = ({
                       onToggle={onToggleTask}
                       onEdit={onEditTask}
                       onDelete={onDeleteTask}
+                      onDuplicate={onDuplicateTask}
                       onToggleSubtask={onToggleSubtask}
                     />
                   </div>
