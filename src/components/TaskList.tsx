@@ -1,7 +1,10 @@
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import TaskItem from './TaskItem';
+import BucketView from './BucketView';
 import { Task, TaskFilters } from '@/types/Task';
+import { Button } from '@/components/ui/button';
+import { Grid, List } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -24,6 +27,9 @@ const TaskList = ({
   onReorderTasks,
   onToggleSubtask
 }: TaskListProps) => {
+  const [viewMode, setViewMode] = useState<'list' | 'buckets'>('list');
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
       if (filters.priority && task.priority !== filters.priority) return false;
@@ -55,6 +61,35 @@ const TaskList = ({
   const activeTasks = filteredAndSortedTasks.filter(task => !task.completed);
   const completedTasks = filteredAndSortedTasks.filter(task => task.completed);
 
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    setDraggedTask(task);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (!draggedTask) return;
+
+    const otherTasks = tasks.filter(task => task.id !== draggedTask.id);
+    const reorderedTasks = [
+      ...otherTasks.slice(0, targetIndex),
+      draggedTask,
+      ...otherTasks.slice(targetIndex)
+    ].map((task, index) => ({ ...task, order_index: index }));
+
+    onReorderTasks(reorderedTasks);
+    setDraggedTask(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTask(null);
+  };
+
   if (filteredAndSortedTasks.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -68,21 +103,64 @@ const TaskList = ({
     <div className="space-y-6">
       {activeTasks.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">
-            Active Tasks ({activeTasks.length})
-          </h3>
-          <div className="space-y-2">
-            {activeTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={onToggleTask}
-                onEdit={onEditTask}
-                onDelete={onDeleteTask}
-                onToggleSubtask={onToggleSubtask}
-              />
-            ))}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-700">
+              Active Tasks ({activeTasks.length})
+            </h3>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List size={16} className="mr-1" />
+                List
+              </Button>
+              <Button
+                variant={viewMode === 'buckets' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('buckets')}
+              >
+                <Grid size={16} className="mr-1" />
+                Buckets
+              </Button>
+            </div>
           </div>
+
+          {viewMode === 'buckets' ? (
+            <BucketView
+              tasks={activeTasks}
+              onToggleTask={onToggleTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              onReorderTasks={onReorderTasks}
+              onToggleSubtask={onToggleSubtask}
+            />
+          ) : (
+            <div className="space-y-2">
+              {activeTasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, task)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`cursor-move transition-opacity ${
+                    draggedTask?.id === task.id ? 'opacity-50' : 'opacity-100'
+                  }`}
+                >
+                  <TaskItem
+                    task={task}
+                    onToggle={onToggleTask}
+                    onEdit={onEditTask}
+                    onDelete={onDeleteTask}
+                    onToggleSubtask={onToggleSubtask}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -2,8 +2,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
+import { useState } from 'react';
 
 interface TaskFiltersProps {
   filters: TTaskFilters;
@@ -14,15 +16,77 @@ interface TaskFiltersProps {
 
 const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFiltersProps) => {
   const { tasks } = useTasks();
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>(
+    filters.priority ? [filters.priority] : []
+  );
+  const [selectedEfforts, setSelectedEfforts] = useState<string[]>(
+    filters.effort ? [filters.effort] : []
+  );
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(
+    filters.label ? [filters.label] : []
+  );
   
   // Get unique labels from all tasks
   const allLabels = Array.from(new Set(tasks.flatMap(task => task.labels))).sort();
 
+  const priorities = [
+    { value: 'urgent', label: 'Urgent' },
+    { value: 'high', label: 'High' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'low', label: 'Low' }
+  ];
+
+  const efforts = [
+    { value: 'quick', label: 'Quick' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'long', label: 'Long' },
+    { value: 'massive', label: 'Massive' }
+  ];
+
+  const handlePriorityChange = (priority: string, checked: boolean) => {
+    const newPriorities = checked 
+      ? [...selectedPriorities, priority]
+      : selectedPriorities.filter(p => p !== priority);
+    
+    setSelectedPriorities(newPriorities);
+    onFiltersChange({
+      ...filters,
+      priority: newPriorities.length === 1 ? newPriorities[0] as any : undefined
+    });
+  };
+
+  const handleEffortChange = (effort: string, checked: boolean) => {
+    const newEfforts = checked 
+      ? [...selectedEfforts, effort]
+      : selectedEfforts.filter(e => e !== effort);
+    
+    setSelectedEfforts(newEfforts);
+    onFiltersChange({
+      ...filters,
+      effort: newEfforts.length === 1 ? newEfforts[0] as any : undefined
+    });
+  };
+
+  const handleLabelChange = (label: string, checked: boolean) => {
+    const newLabels = checked 
+      ? [...selectedLabels, label]
+      : selectedLabels.filter(l => l !== label);
+    
+    setSelectedLabels(newLabels);
+    onFiltersChange({
+      ...filters,
+      label: newLabels.length === 1 ? newLabels[0] : undefined
+    });
+  };
+
   const clearFilters = () => {
+    setSelectedPriorities([]);
+    setSelectedEfforts([]);
+    setSelectedLabels([]);
     onFiltersChange({});
   };
 
-  const hasActiveFilters = filters.priority || filters.effort || filters.label;
+  const hasActiveFilters = selectedPriorities.length > 0 || selectedEfforts.length > 0 || selectedLabels.length > 0;
 
   return (
     <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
@@ -35,7 +99,7 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
           <Label htmlFor="sort" className="text-sm font-medium">Sort by</Label>
           <Select value={sortBy} onValueChange={onSortChange}>
@@ -52,77 +116,58 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
         </div>
 
         <div>
-          <Label htmlFor="priority-filter" className="text-sm font-medium">Priority</Label>
-          <Select 
-            value={filters.priority || 'all'} 
-            onValueChange={(value) => 
-              onFiltersChange({ 
-                ...filters, 
-                priority: value === 'all' ? undefined : value as any 
-              })
-            }
-          >
-            <SelectTrigger id="priority-filter">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-sm font-medium">Priority</Label>
+          <div className="space-y-2 mt-2">
+            {priorities.map((priority) => (
+              <div key={priority.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`priority-${priority.value}`}
+                  checked={selectedPriorities.includes(priority.value)}
+                  onCheckedChange={(checked) => handlePriorityChange(priority.value, !!checked)}
+                />
+                <Label htmlFor={`priority-${priority.value}`} className="text-sm">
+                  {priority.label}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>
-          <Label htmlFor="effort-filter" className="text-sm font-medium">Effort</Label>
-          <Select 
-            value={filters.effort || 'all'} 
-            onValueChange={(value) => 
-              onFiltersChange({ 
-                ...filters, 
-                effort: value === 'all' ? undefined : value as any 
-              })
-            }
-          >
-            <SelectTrigger id="effort-filter">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Efforts</SelectItem>
-              <SelectItem value="quick">Quick</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="long">Long</SelectItem>
-              <SelectItem value="massive">Massive</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-sm font-medium">Effort</Label>
+          <div className="space-y-2 mt-2">
+            {efforts.map((effort) => (
+              <div key={effort.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`effort-${effort.value}`}
+                  checked={selectedEfforts.includes(effort.value)}
+                  onCheckedChange={(checked) => handleEffortChange(effort.value, !!checked)}
+                />
+                <Label htmlFor={`effort-${effort.value}`} className="text-sm">
+                  {effort.label}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         {allLabels.length > 0 && (
           <div>
-            <Label htmlFor="label-filter" className="text-sm font-medium">Label</Label>
-            <Select 
-              value={filters.label || 'all'} 
-              onValueChange={(value) => 
-                onFiltersChange({ 
-                  ...filters, 
-                  label: value === 'all' ? undefined : value 
-                })
-              }
-            >
-              <SelectTrigger id="label-filter">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Labels</SelectItem>
-                {allLabels.map((label) => (
-                  <SelectItem key={label} value={label}>
+            <Label className="text-sm font-medium">Labels</Label>
+            <div className="space-y-2 mt-2 max-h-32 overflow-y-auto">
+              {allLabels.map((label) => (
+                <div key={label} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`label-${label}`}
+                    checked={selectedLabels.includes(label)}
+                    onCheckedChange={(checked) => handleLabelChange(label, !!checked)}
+                  />
+                  <Label htmlFor={`label-${label}`} className="text-sm">
                     {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

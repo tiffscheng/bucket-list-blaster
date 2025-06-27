@@ -28,4 +28,7 @@ export interface TaskFilters {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   effort?: 'quick' | 'medium' | 'long' | 'massive';
   label?: string;
+  priorities?: ('low' | 'medium' | 'high' | 'urgent')[];
+  efforts?: ('quick' | 'medium' | 'long' | 'massive')[];
+  labels?: string[];
 }
