@@ -3,12 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TaskFiltersProps {
@@ -108,6 +107,15 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
     });
   };
 
+  const clearAllLabels = () => {
+    setSelectedLabels([]);
+    onFiltersChange({
+      ...filters,
+      labels: undefined,
+      label: undefined
+    });
+  };
+
   const clearFilters = () => {
     setSelectedPriorities([]);
     setSelectedEfforts([]);
@@ -200,22 +208,34 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto bg-white">
                   {allLabels.length === 0 ? (
                     <div className="p-4 text-sm text-gray-500">No labels found</div>
                   ) : (
                     <div className="p-1">
+                      <div className="flex items-center justify-between p-2 border-b">
+                        <span className="text-sm font-medium">Select Labels</span>
+                        {selectedLabels.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAllLabels}
+                            className="text-xs h-6 px-2"
+                          >
+                            Clear All
+                          </Button>
+                        )}
+                      </div>
                       {allLabels.map((label) => (
                         <div
                           key={label}
-                          className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer rounded"
+                          className="flex items-center justify-between w-full p-2 hover:bg-gray-100 cursor-pointer rounded"
                           onClick={() => handleLabelToggle(label)}
                         >
-                          <Checkbox
-                            checked={selectedLabels.includes(label)}
-                            onChange={() => {}} // Handled by parent onClick
-                          />
-                          <span className="text-sm">{label}</span>
+                          <span className="text-sm flex-1">{label}</span>
+                          {selectedLabels.includes(label) && (
+                            <Check className="h-4 w-4 text-blue-600" />
+                          )}
                         </div>
                       ))}
                     </div>
