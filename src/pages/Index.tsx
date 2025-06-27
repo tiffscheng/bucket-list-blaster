@@ -33,7 +33,7 @@ const Index = () => {
             <img 
               src="/lovable-uploads/04daeea1-d538-4974-a387-2208c197cd84.png" 
               alt="TaskFlow" 
-              className="h-12 mb-2"
+              className="h-10 mb-2"
             />
             <p className="text-gray-600">Organize your tasks, manage your time, achieve your goals</p>
             {!user && (
