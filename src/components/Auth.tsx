@@ -123,9 +123,11 @@ const Auth = () => {
               Back to App
             </Button>
           </div>
-          <CardTitle className="text-2xl">
-            Task<span className="text-blue-600">Flow</span>
-          </CardTitle>
+          <img 
+            src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
+            alt="TaskFlow" 
+            className="h-8 mx-auto mb-4"
+          />
           <CardDescription>
             Sign in to your account or create a new one to save your tasks
           </CardDescription>

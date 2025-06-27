@@ -24,17 +24,16 @@ const TaskSubtasks = ({ subtasks, taskId, onToggleSubtask }: TaskSubtasksProps) 
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          {completedSubtasks}/{totalSubtasks} subtasks
-        </span>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowSubtasks(!showSubtasks)}
-          className="p-0 h-auto text-xs text-gray-600 hover:text-gray-800"
+          className="h-auto p-0 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full hover:bg-gray-200 hover:text-gray-700"
         >
-          {showSubtasks ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          {showSubtasks ? 'Hide' : 'Show'} subtasks
+          <span className="mr-1">
+            {completedSubtasks}/{totalSubtasks} subtasks
+          </span>
+          {showSubtasks ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </Button>
       </div>
 

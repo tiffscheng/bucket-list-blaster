@@ -31,7 +31,7 @@ const Index = () => {
         <div className="mb-8 flex justify-between items-center">
           <div>
             <img 
-              src="/lovable-uploads/04daeea1-d538-4974-a387-2208c197cd84.png" 
+              src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
               alt="TaskFlow" 
               className="h-10 mb-2"
             />

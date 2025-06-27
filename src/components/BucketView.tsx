@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
@@ -215,7 +216,7 @@ const BucketView = ({
                       className="text-lg font-semibold"
                       onKeyPress={(e) => e.key === 'Enter' && handleSaveBucketEdit(bucket.id)}
                     />
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-full">
                       {colorOptions.map((color) => (
                         <button
                           key={color.value}
@@ -254,13 +255,7 @@ const BucketView = ({
                   <>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-gray-700">{bucket.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-4 h-4 rounded-full border"
-                          style={{ backgroundColor: bucket.color }}
-                        />
-                        <span className="text-sm text-gray-500">({bucketTasks.length})</span>
-                      </div>
+                      <span className="text-sm text-gray-500">({bucketTasks.length})</span>
                     </div>
                     {!bucket.is_default && (
                       <div className="flex gap-1">
@@ -317,6 +312,7 @@ const BucketView = ({
                       onDelete={onDeleteTask}
                       onDuplicate={handleDuplicateTask}
                       onToggleSubtask={onToggleSubtask}
+                      hideActions={true}
                     />
                   </div>
                 ))}
@@ -356,7 +352,7 @@ const BucketView = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Bucket Color
               </label>
-              <div className="grid grid-cols-6 gap-2">
+              <div className="flex flex-wrap gap-1">
                 {colorOptions.map((color) => (
                   <button
                     key={color.value}
