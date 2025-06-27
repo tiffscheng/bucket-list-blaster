@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
@@ -52,14 +51,12 @@ const BucketView = ({
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
 
   // Filter to show only active (non-completed) tasks
-  const activeTasks = tasks.filter(task => !task.completed);
-
   const getFilteredTasksForBucket = (bucket: any) => {
     if (bucket.is_default) {
       // General bucket shows tasks with no bucket_id or matching bucket_id
-      return activeTasks.filter(task => !task.bucket_id || task.bucket_id === bucket.id);
+      return tasks.filter(task => !task.bucket_id || task.bucket_id === bucket.id);
     }
-    return activeTasks.filter(task => task.bucket_id === bucket.id);
+    return tasks.filter(task => task.bucket_id === bucket.id);
   };
 
   const handleAddBucket = () => {
