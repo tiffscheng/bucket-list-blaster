@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, X, GripVertical } from 'lucide-react';
+import { Plus, GripVertical } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 
@@ -26,12 +28,10 @@ const BucketView = ({
   onReorderTasks,
   onToggleSubtask 
 }: BucketViewProps) => {
-  const { buckets, addBucket, updateBucket, deleteBucket, reorderBuckets } = useBuckets();
+  const { buckets, addBucket } = useBuckets();
+  const [showAddBucketDialog, setShowAddBucketDialog] = useState(false);
   const [newBucketName, setNewBucketName] = useState('');
   const [newBucketColor, setNewBucketColor] = useState('#3b82f6');
-  const [editingBucket, setEditingBucket] = useState<string | null>(null);
-  const [editBucketName, setEditBucketName] = useState('');
-  const [draggedBucket, setDraggedBucket] = useState<string | null>(null);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
@@ -54,66 +54,8 @@ const BucketView = ({
       });
       setNewBucketName('');
       setNewBucketColor('#3b82f6');
+      setShowAddBucketDialog(false);
     }
-  };
-
-  const handleEditBucket = (bucketId: string) => {
-    const bucket = buckets.find(b => b.id === bucketId);
-    if (bucket) {
-      setEditingBucket(bucketId);
-      setEditBucketName(bucket.name);
-    }
-  };
-
-  const handleSaveBucketEdit = (bucketId: string) => {
-    if (editBucketName.trim()) {
-      const bucket = buckets.find(b => b.id === bucketId);
-      if (bucket) {
-        updateBucket(bucketId, { ...bucket, name: editBucketName.trim() });
-      }
-    }
-    setEditingBucket(null);
-    setEditBucketName('');
-  };
-
-  const handleCancelBucketEdit = () => {
-    setEditingBucket(null);
-    setEditBucketName('');
-  };
-
-  const handleBucketDragStart = (e: React.DragEvent, bucketId: string) => {
-    setDraggedBucket(bucketId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleBucketDragEnd = () => {
-    setDraggedBucket(null);
-  };
-
-  const handleBucketDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleBucketDrop = (e: React.DragEvent, targetBucketId: string) => {
-    e.preventDefault();
-    if (!draggedBucket || draggedBucket === targetBucketId) return;
-
-    const draggedIndex = buckets.findIndex(b => b.id === draggedBucket);
-    const targetIndex = buckets.findIndex(b => b.id === targetBucketId);
-
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    const newBuckets = [...buckets];
-    const [draggedBucketObj] = newBuckets.splice(draggedIndex, 1);
-    newBuckets.splice(targetIndex, 0, draggedBucketObj);
-
-    const reorderedBuckets = newBuckets.map((bucket, index) => ({
-      ...bucket,
-      order_index: index
-    }));
-
-    reorderBuckets(reorderedBuckets);
   };
 
   const handleTaskDragStart = (e: React.DragEvent, task: Task) => {
@@ -189,119 +131,10 @@ const BucketView = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-800">Task Buckets</h2>
-      </div>
-
-      {/* Bucket Management */}
-      <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-        <h3 className="text-lg font-medium text-gray-700">Manage Buckets</h3>
-
-        {/* Add New Bucket */}
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="New bucket name"
-            value={newBucketName}
-            onChange={(e) => setNewBucketName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAddBucket()}
-          />
-          <Input
-            type="color"
-            value={newBucketColor}
-            onChange={(e) => setNewBucketColor(e.target.value)}
-            className="w-16"
-          />
-          <Button onClick={handleAddBucket} disabled={!newBucketName.trim()}>
-            <Plus size={16} className="mr-2" />
-            Add Bucket
-          </Button>
-        </div>
-
-        {/* Existing Buckets */}
-        <div className="space-y-2">
-          {buckets.map((bucket) => (
-            <div
-              key={bucket.id}
-              className={`flex items-center justify-between bg-white rounded-md p-3 shadow-sm cursor-move transition-all duration-200 ${
-                draggedBucket === bucket.id ? 'opacity-50' : ''
-              }`}
-              draggable
-              onDragStart={(e) => handleBucketDragStart(e, bucket.id)}
-              onDragEnd={handleBucketDragEnd}
-              onDragOver={handleBucketDragOver}
-              onDrop={(e) => handleBucketDrop(e, bucket.id)}
-            >
-              <div className="flex items-center gap-3">
-                <GripVertical size={16} className="text-gray-400" />
-                {editingBucket === bucket.id ? (
-                  <Input
-                    type="text"
-                    value={editBucketName}
-                    onChange={(e) => setEditBucketName(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') handleSaveBucketEdit(bucket.id);
-                      if (e.key === 'Escape') handleCancelBucketEdit();
-                    }}
-                    className="h-8"
-                    autoFocus
-                  />
-                ) : (
-                  <span className="font-medium text-gray-800">
-                    {bucket.name} {bucket.is_default && '(Default)'}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="color"
-                  value={bucket.color}
-                  onChange={(e) => updateBucket(bucket.id, { ...bucket, color: e.target.value })}
-                  className="w-10 h-8"
-                />
-                {editingBucket === bucket.id ? (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSaveBucketEdit(bucket.id)}
-                      className="h-8 px-2"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCancelBucketEdit}
-                      className="h-8 px-2"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditBucket(bucket.id)}
-                      className="h-8 px-2"
-                    >
-                      <Edit size={14} />
-                    </Button>
-                    {!bucket.is_default && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteBucket(bucket.id)}
-                        className="text-red-600 hover:bg-red-50 h-8 px-2"
-                      >
-                        <X size={14} />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <Button onClick={() => setShowAddBucketDialog(true)}>
+          <Plus size={16} className="mr-2" />
+          Add Bucket
+        </Button>
       </div>
 
       {/* Bucket Grid */}
@@ -362,6 +195,50 @@ const BucketView = ({
           );
         })}
       </div>
+
+      {/* Add Bucket Dialog */}
+      <Dialog open={showAddBucketDialog} onOpenChange={setShowAddBucketDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Bucket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="bucket-name" className="block text-sm font-medium text-gray-700 mb-1">
+                Bucket Name
+              </label>
+              <Input
+                id="bucket-name"
+                type="text"
+                placeholder="Enter bucket name"
+                value={newBucketName}
+                onChange={(e) => setNewBucketName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddBucket()}
+              />
+            </div>
+            <div>
+              <label htmlFor="bucket-color" className="block text-sm font-medium text-gray-700 mb-1">
+                Bucket Color
+              </label>
+              <Input
+                id="bucket-color"
+                type="color"
+                value={newBucketColor}
+                onChange={(e) => setNewBucketColor(e.target.value)}
+                className="w-20 h-10"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddBucketDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddBucket} disabled={!newBucketName.trim()}>
+              Add Bucket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {duplicatingTask && (
         <TaskForm
