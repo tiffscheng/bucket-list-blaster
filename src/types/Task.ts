@@ -1,4 +1,3 @@
-
 export interface Subtask {
   id: string;
   title: string;
@@ -22,6 +21,7 @@ export interface Task {
   is_recurring: boolean;
   recurrence_interval?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   last_completed_at?: Date;
+  bucket_id?: string;
 }
 
 export interface TaskFilters {

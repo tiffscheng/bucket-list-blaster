@@ -108,6 +108,7 @@ const BucketView = ({
       effort: task.effort,
       labels: [...task.labels],
       due_date: task.due_date,
+      bucket_id: task.bucket_id,
       subtasks: task.subtasks.map(subtask => ({
         id: crypto.randomUUID(),
         title: subtask.title,
@@ -172,6 +173,8 @@ const BucketView = ({
                   addBucket({
                     name: newBucketName,
                     color: newBucketColor,
+                    order_index: buckets.length,
+                    is_default: false,
                   });
                   setNewBucketName('');
                 }
