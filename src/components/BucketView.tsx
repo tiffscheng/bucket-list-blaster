@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, GripVertical } from 'lucide-react';
 
 interface CustomBucket {
   id: string;
   name: string;
   color: string;
   priority?: string;
+  order: number;
+  isDefault?: boolean;
 }
 
 interface BucketViewProps {
@@ -35,20 +37,22 @@ const BucketView = ({
 }: BucketViewProps) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
-  const [customBuckets, setCustomBuckets] = useState<CustomBucket[]>([]);
+  const [draggedBucket, setDraggedBucket] = useState<CustomBucket | null>(null);
+  const [draggedOverBucketOrder, setDraggedOverBucketOrder] = useState<number | null>(null);
+  
+  const [buckets, setBuckets] = useState<CustomBucket[]>([
+    { id: 'urgent', name: 'Urgent', color: '#ef4444', priority: 'urgent', order: 0, isDefault: true },
+    { id: 'high', name: 'High Priority', color: '#f97316', priority: 'high', order: 1, isDefault: true },
+    { id: 'medium', name: 'Medium Priority', color: '#eab308', priority: 'medium', order: 2, isDefault: true },
+    { id: 'low', name: 'Low Priority', color: '#22c55e', priority: 'low', order: 3, isDefault: true },
+  ]);
+  
   const [newBucketName, setNewBucketName] = useState('');
   const [newBucketColor, setNewBucketColor] = useState('#3b82f6');
   const [isAddingBucket, setIsAddingBucket] = useState(false);
   const [editingBucket, setEditingBucket] = useState<CustomBucket | null>(null);
 
-  const defaultBuckets: CustomBucket[] = [
-    { id: 'urgent', name: 'Urgent', color: '#ef4444', priority: 'urgent' },
-    { id: 'high', name: 'High Priority', color: '#f97316', priority: 'high' },
-    { id: 'medium', name: 'Medium Priority', color: '#eab308', priority: 'medium' },
-    { id: 'low', name: 'Low Priority', color: '#22c55e', priority: 'low' },
-  ];
-
-  const allBuckets = [...defaultBuckets, ...customBuckets];
+  const sortedBuckets = [...buckets].sort((a, b) => a.order - b.order);
 
   const getTasksForBucket = (bucket: CustomBucket) => {
     if (bucket.priority) {
@@ -61,20 +65,22 @@ const BucketView = ({
   const addCustomBucket = () => {
     if (!newBucketName.trim()) return;
     
+    const maxOrder = Math.max(...buckets.map(b => b.order), -1);
     const newBucket: CustomBucket = {
       id: crypto.randomUUID(),
       name: newBucketName.trim(),
       color: newBucketColor,
+      order: maxOrder + 1,
     };
     
-    setCustomBuckets([...customBuckets, newBucket]);
+    setBuckets([...buckets, newBucket]);
     setNewBucketName('');
     setNewBucketColor('#3b82f6');
     setIsAddingBucket(false);
   };
 
   const updateBucket = (bucketId: string, updates: Partial<CustomBucket>) => {
-    setCustomBuckets(buckets => 
+    setBuckets(buckets => 
       buckets.map(bucket => 
         bucket.id === bucketId ? { ...bucket, ...updates } : bucket
       )
@@ -83,29 +89,30 @@ const BucketView = ({
   };
 
   const deleteBucket = (bucketId: string) => {
-    setCustomBuckets(buckets => buckets.filter(bucket => bucket.id !== bucketId));
+    setBuckets(buckets => buckets.filter(bucket => bucket.id !== bucketId));
   };
 
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
+  const handleTaskDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', '');
   };
 
-  const handleDragOver = (e: React.DragEvent, bucketId: string) => {
+  const handleTaskDragOver = (e: React.DragEvent, bucketId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDraggedOverBucket(bucketId);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleTaskDragLeave = (e: React.DragEvent) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDraggedOverBucket(null);
     }
   };
 
-  const handleDrop = (e: React.DragEvent, bucket: CustomBucket) => {
+  const handleTaskDrop = (e: React.DragEvent, bucket: CustomBucket) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!draggedTask) return;
 
     let updatedTask = { ...draggedTask };
@@ -127,9 +134,53 @@ const BucketView = ({
     setDraggedOverBucket(null);
   };
 
+  const handleBucketDragStart = (e: React.DragEvent, bucket: CustomBucket) => {
+    setDraggedBucket(bucket);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  };
+
+  const handleBucketDragOver = (e: React.DragEvent, targetOrder: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDraggedOverBucketOrder(targetOrder);
+  };
+
+  const handleBucketDrop = (e: React.DragEvent, targetOrder: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedBucket || draggedBucket.order === targetOrder) return;
+
+    const updatedBuckets = buckets.map(bucket => {
+      if (bucket.id === draggedBucket.id) {
+        return { ...bucket, order: targetOrder };
+      }
+      
+      if (draggedBucket.order < targetOrder) {
+        // Moving down: shift buckets between old and new position up
+        if (bucket.order > draggedBucket.order && bucket.order <= targetOrder) {
+          return { ...bucket, order: bucket.order - 1 };
+        }
+      } else {
+        // Moving up: shift buckets between new and old position down
+        if (bucket.order >= targetOrder && bucket.order < draggedBucket.order) {
+          return { ...bucket, order: bucket.order + 1 };
+        }
+      }
+      
+      return bucket;
+    });
+
+    setBuckets(updatedBuckets);
+    setDraggedBucket(null);
+    setDraggedOverBucketOrder(null);
+  };
+
   const handleDragEnd = () => {
     setDraggedTask(null);
     setDraggedOverBucket(null);
+    setDraggedBucket(null);
+    setDraggedOverBucketOrder(null);
   };
 
   const colorOptions = [
@@ -192,43 +243,53 @@ const BucketView = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {allBuckets.map((bucket) => {
+        {sortedBuckets.map((bucket) => {
           const bucketTasks = getTasksForBucket(bucket);
-          const isDefaultBucket = bucket.priority !== undefined;
           
           return (
             <div
               key={bucket.id}
+              draggable
+              onDragStart={(e) => handleBucketDragStart(e, bucket)}
+              onDragOver={(e) => handleBucketDragOver(e, bucket.order)}
+              onDrop={(e) => handleBucketDrop(e, bucket.order)}
+              onDragEnd={handleDragEnd}
               className={cn(
-                "p-4 rounded-lg border-2 border-dashed min-h-[200px] transition-all duration-200",
+                "p-4 rounded-lg border-2 border-dashed min-h-[200px] transition-all duration-200 cursor-grab active:cursor-grabbing",
                 draggedOverBucket === bucket.id && draggedTask && !bucketTasks.some(t => t.id === draggedTask.id)
                   ? "border-blue-400 scale-102 shadow-lg"
                   : "border-gray-300",
                 draggedTask && bucketTasks.some(t => t.id === draggedTask.id) && draggedOverBucket !== bucket.id
                   ? "opacity-75"
+                  : "",
+                draggedOverBucketOrder === bucket.order && draggedBucket
+                  ? "border-blue-400 scale-105"
                   : ""
               )}
               style={{ 
                 backgroundColor: `${bucket.color}10`,
                 borderColor: bucket.color 
               }}
-              onDragOver={(e) => handleDragOver(e, bucket.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, bucket)}
+              onDragOverCapture={(e) => handleTaskDragOver(e, bucket.id)}
+              onDragLeave={handleTaskDragLeave}
+              onDropCapture={(e) => handleTaskDrop(e, bucket)}
             >
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-700 flex-1">
-                  {bucket.name} ({bucketTasks.length})
-                </h4>
-                {!isDefaultBucket && (
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setEditingBucket(bucket)}
-                    >
-                      <Edit size={14} />
-                    </Button>
+                <div className="flex items-center gap-2 flex-1">
+                  <GripVertical size={16} className="text-gray-400" />
+                  <h4 className="font-semibold text-gray-700 flex-1">
+                    {bucket.name} ({bucketTasks.length})
+                  </h4>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingBucket(bucket)}
+                  >
+                    <Edit size={14} />
+                  </Button>
+                  {!bucket.isDefault && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -236,8 +297,8 @@ const BucketView = ({
                     >
                       <Trash2 size={14} />
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -245,7 +306,7 @@ const BucketView = ({
                   <div
                     key={task.id}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, task)}
+                    onDragStart={(e) => handleTaskDragStart(e, task)}
                     onDragEnd={handleDragEnd}
                     className={cn(
                       "cursor-move transition-all duration-200 ease-in-out",

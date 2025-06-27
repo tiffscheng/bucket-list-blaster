@@ -3,11 +3,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
-import { ChevronDown, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TaskFiltersProps {
@@ -28,7 +26,6 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
   const [selectedLabels, setSelectedLabels] = useState<string[]>(
     filters.label ? [filters.label] : []
   );
-  const [labelsOpen, setLabelsOpen] = useState(false);
   
   // Get unique labels from all tasks and update when tasks change
   const allLabels = Array.from(new Set(tasks.flatMap(task => task.labels))).sort();
@@ -84,21 +81,11 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
     });
   };
 
-  const handleLabelToggle = (label: string) => {
-    const newLabels = selectedLabels.includes(label)
-      ? selectedLabels.filter(l => l !== label)
-      : [...selectedLabels, label];
+  const handleLabelChange = (label: string, checked: boolean) => {
+    const newLabels = checked
+      ? [...selectedLabels, label]
+      : selectedLabels.filter(l => l !== label);
     
-    setSelectedLabels(newLabels);
-    onFiltersChange({
-      ...filters,
-      labels: newLabels.length > 0 ? newLabels : undefined,
-      label: newLabels.length === 1 ? newLabels[0] : undefined
-    });
-  };
-
-  const handleRemoveLabel = (labelToRemove: string) => {
-    const newLabels = selectedLabels.filter(l => l !== labelToRemove);
     setSelectedLabels(newLabels);
     onFiltersChange({
       ...filters,
@@ -191,76 +178,36 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
         </div>
 
         <div>
-          <Label className="text-sm font-medium">Labels</Label>
-          <div className="mt-2">
-            <Popover open={labelsOpen} onOpenChange={setLabelsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={labelsOpen}
-                  className="w-full justify-between"
-                >
-                  {selectedLabels.length === 0
-                    ? "Select labels..."
-                    : `${selectedLabels.length} label${selectedLabels.length > 1 ? 's' : ''} selected`}
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <div className="max-h-60 overflow-y-auto bg-white">
-                  {allLabels.length === 0 ? (
-                    <div className="p-4 text-sm text-gray-500">No labels found</div>
-                  ) : (
-                    <div className="p-1">
-                      <div className="flex items-center justify-between p-2 border-b">
-                        <span className="text-sm font-medium">Select Labels</span>
-                        {selectedLabels.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={clearAllLabels}
-                            className="text-xs h-6 px-2"
-                          >
-                            Clear All
-                          </Button>
-                        )}
-                      </div>
-                      {allLabels.map((label) => (
-                        <div
-                          key={label}
-                          className="flex items-center justify-between w-full p-2 hover:bg-gray-100 cursor-pointer rounded"
-                          onClick={() => handleLabelToggle(label)}
-                        >
-                          <span className="text-sm flex-1">{label}</span>
-                          {selectedLabels.includes(label) && (
-                            <Check className="h-4 w-4 text-blue-600" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-            
-            {selectedLabels.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {selectedLabels.map((label) => (
-                  <div
+          <Label className="text-sm font-medium mb-2 block">Labels</Label>
+          <div className="flex flex-wrap gap-2">
+            {allLabels.length === 0 ? (
+              <p className="text-sm text-gray-500">No labels available</p>
+            ) : (
+              <>
+                {allLabels.map((label) => (
+                  <Badge
                     key={label}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                    variant={selectedLabels.includes(label) ? "default" : "outline"}
+                    className={cn(
+                      "cursor-pointer transition-all hover:scale-105",
+                      selectedLabels.includes(label) ? "bg-blue-500 text-white" : "hover:bg-gray-100"
+                    )}
+                    onClick={() => handleLabelChange(label, !selectedLabels.includes(label))}
                   >
                     {label}
-                    <button
-                      onClick={() => handleRemoveLabel(label)}
-                      className="hover:bg-blue-200 rounded-full p-0.5"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
+                  </Badge>
                 ))}
-              </div>
+                {selectedLabels.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllLabels}
+                    className="text-xs h-6 px-2"
+                  >
+                    Clear All
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>

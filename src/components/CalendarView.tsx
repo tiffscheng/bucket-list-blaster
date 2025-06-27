@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,8 @@ const CalendarView = () => {
 
   const dailyRecurringTasks = recurringTasks.filter(task => task.recurrence_interval === 'daily');
   const weeklyRecurringTasks = recurringTasks.filter(task => task.recurrence_interval === 'weekly');
+  const monthlyRecurringTasks = recurringTasks.filter(task => task.recurrence_interval === 'monthly');
+  const yearlyRecurringTasks = recurringTasks.filter(task => task.recurrence_interval === 'yearly');
 
   const getTasksForDate = (date: Date) => {
     return tasksWithDueDates.filter(task => 
@@ -297,7 +298,7 @@ const CalendarView = () => {
           </div>
         </div>
 
-        <div className="lg:w-1/4">
+        <div className="lg:w-1/4 space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <Calendar size={18} />
@@ -341,6 +342,38 @@ const CalendarView = () => {
                         )}
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <RotateCcw size={18} />
+              Recurring Tasks
+            </h3>
+            
+            {recurringTasks.length === 0 ? (
+              <p className="text-gray-500 text-sm">No recurring tasks</p>
+            ) : (
+              <div className="space-y-3">
+                {[...monthlyRecurringTasks, ...yearlyRecurringTasks].map((task) => (
+                  <div key={task.id} className="bg-white p-3 rounded-lg border">
+                    <div className="flex items-start gap-2 mb-2">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full mt-2",
+                        getPriorityColor(task.priority)
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm text-gray-900 truncate">
+                          {task.title}
+                        </h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Repeats {task.recurrence_interval}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
