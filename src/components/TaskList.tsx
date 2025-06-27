@@ -73,71 +73,78 @@ const TaskList = ({
 
   return (
     <div className="space-y-6">
-      {activeTasks.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Active Tasks ({activeTasks.length})
-            </h3>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List size={16} className="mr-1" />
-                List
-              </Button>
-              <Button
-                variant={viewMode === 'buckets' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('buckets')}
-              >
-                <Grid size={16} className="mr-1" />
-                Buckets
-              </Button>
+      {/* View Mode Toggle */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-700">
+          Tasks ({filteredAndSortedTasks.length})
+        </h3>
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List size={16} className="mr-1" />
+            List
+          </Button>
+          <Button
+            variant={viewMode === 'buckets' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('buckets')}
+          >
+            <Grid size={16} className="mr-1" />
+            Buckets
+          </Button>
+        </div>
+      </div>
+
+      {/* Render based on view mode */}
+      {viewMode === 'buckets' ? (
+        <BucketView
+          tasks={filteredAndSortedTasks}
+          onToggleTask={onToggleTask}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
+          onDuplicateTask={onDuplicateTask}
+          onReorderTasks={onReorderTasks}
+          onToggleSubtask={onToggleSubtask}
+        />
+      ) : (
+        <>
+          {activeTasks.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                Active Tasks ({activeTasks.length})
+              </h3>
+              <TaskListView
+                tasks={activeTasks}
+                onToggleTask={onToggleTask}
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}
+                onDuplicateTask={onDuplicateTask}
+                onReorderTasks={onReorderTasks}
+                onToggleSubtask={onToggleSubtask}
+              />
             </div>
-          </div>
-
-          {viewMode === 'buckets' ? (
-            <BucketView
-              tasks={activeTasks}
-              onToggleTask={onToggleTask}
-              onEditTask={onEditTask}
-              onDeleteTask={onDeleteTask}
-              onDuplicateTask={onDuplicateTask}
-              onReorderTasks={onReorderTasks}
-              onToggleSubtask={onToggleSubtask}
-            />
-          ) : (
-            <TaskListView
-              tasks={activeTasks}
-              onToggleTask={onToggleTask}
-              onEditTask={onEditTask}
-              onDeleteTask={onDeleteTask}
-              onDuplicateTask={onDuplicateTask}
-              onReorderTasks={onReorderTasks}
-              onToggleSubtask={onToggleSubtask}
-            />
           )}
-        </div>
-      )}
 
-      {completedTasks.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">
-            Completed Tasks ({completedTasks.length})
-          </h3>
-          <TaskListView
-            tasks={completedTasks}
-            onToggleTask={onToggleTask}
-            onEditTask={onEditTask}
-            onDeleteTask={onDeleteTask}
-            onDuplicateTask={onDuplicateTask}
-            onReorderTasks={onReorderTasks}
-            onToggleSubtask={onToggleSubtask}
-          />
-        </div>
+          {completedTasks.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                Completed Tasks ({completedTasks.length})
+              </h3>
+              <TaskListView
+                tasks={completedTasks}
+                onToggleTask={onToggleTask}
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}
+                onDuplicateTask={onDuplicateTask}
+                onReorderTasks={onReorderTasks}
+                onToggleSubtask={onToggleSubtask}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
