@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import TaskItem from './TaskItem';
 import { Task, TaskFilters } from '@/types/Task';
@@ -32,7 +33,7 @@ const TaskList = ({
     });
 
     if (sortBy === 'manual') {
-      filtered.sort((a, b) => a.order - b.order);
+      filtered.sort((a, b) => a.order_index - b.order_index);
     } else if (sortBy === 'priority') {
       const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
       filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
@@ -41,10 +42,10 @@ const TaskList = ({
       filtered.sort((a, b) => effortOrder[a.effort] - effortOrder[b.effort]);
     } else if (sortBy === 'dueDate') {
       filtered.sort((a, b) => {
-        if (!a.dueDate && !b.dueDate) return 0;
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return a.dueDate.getTime() - b.dueDate.getTime();
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return a.due_date.getTime() - b.due_date.getTime();
       });
     }
 

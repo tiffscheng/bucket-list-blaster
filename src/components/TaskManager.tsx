@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import TaskForm from './TaskForm';
@@ -14,12 +15,12 @@ const TaskManager = () => {
   const [filters, setFilters] = useState<TTaskFilters>({});
   const [sortBy, setSortBy] = useState<'manual' | 'priority' | 'effort' | 'dueDate'>('manual');
 
-  const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'order'>) => {
+  const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     addTask(taskData);
     setShowForm(false);
   };
 
-  const handleEditTask = (taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'order'>) => {
+  const handleEditTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     if (editingTask) {
       updateTask(editingTask.id, taskData);
       setEditingTask(null);

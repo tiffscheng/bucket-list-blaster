@@ -12,19 +12,19 @@ const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
 
-  const tasksWithDueDates = tasks.filter(task => task.dueDate && !task.completed);
+  const tasksWithDueDates = tasks.filter(task => task.due_date && !task.completed);
   
   const upcomingTasks = useMemo(() => {
     const today = startOfDay(new Date());
     return tasksWithDueDates
-      .filter(task => task.dueDate && isAfter(task.dueDate, today))
-      .sort((a, b) => (a.dueDate!.getTime() - b.dueDate!.getTime()))
+      .filter(task => task.due_date && isAfter(task.due_date, today))
+      .sort((a, b) => (a.due_date!.getTime() - b.due_date!.getTime()))
       .slice(0, 5);
   }, [tasksWithDueDates]);
 
   const getTasksForDate = (date: Date) => {
     return tasksWithDueDates.filter(task => 
-      task.dueDate && isSameDay(task.dueDate, date)
+      task.due_date && isSameDay(task.due_date, date)
     );
   };
 
@@ -175,7 +175,7 @@ const CalendarView = () => {
                           {task.title}
                         </h4>
                         <p className="text-xs text-gray-600 mt-1">
-                          Due {format(task.dueDate!, 'MMM d, yyyy')}
+                          Due {format(task.due_date!, 'MMM d, yyyy')}
                         </p>
                       </div>
                     </div>

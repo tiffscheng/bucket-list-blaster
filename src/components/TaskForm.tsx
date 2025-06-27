@@ -14,7 +14,7 @@ import { Task, Subtask } from '@/types/Task';
 
 interface TaskFormProps {
   task?: Task | null;
-  onSubmit: (task: Omit<Task, 'id' | 'completed' | 'createdAt' | 'order'>) => void;
+  onSubmit: (task: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => void;
   onCancel: () => void;
 }
 
@@ -25,10 +25,12 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     effort: 'medium' as 'quick' | 'medium' | 'long' | 'massive',
     labels: [] as string[],
-    dueDate: undefined as Date | undefined,
+    due_date: undefined as Date | undefined,
     subtasks: [] as Subtask[],
     is_recurring: false,
     recurrence_interval: undefined as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined,
+    user_id: undefined as string | undefined,
+    updated_at: undefined as Date | undefined,
   });
   const [newLabel, setNewLabel] = useState('');
   const [newSubtask, setNewSubtask] = useState('');
@@ -41,10 +43,12 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         priority: task.priority,
         effort: task.effort,
         labels: [...task.labels],
-        dueDate: task.dueDate,
+        due_date: task.due_date,
         subtasks: [...task.subtasks],
         is_recurring: task.is_recurring,
         recurrence_interval: task.recurrence_interval,
+        user_id: task.user_id,
+        updated_at: task.updated_at,
       });
     }
   }, [task]);
@@ -201,18 +205,18 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !formData.dueDate && "text-muted-foreground"
+                    !formData.due_date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dueDate ? format(formData.dueDate, "PPP") : "Pick a date"}
+                  {formData.due_date ? format(formData.due_date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={formData.dueDate}
-                  onSelect={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+                  selected={formData.due_date}
+                  onSelect={(date) => setFormData(prev => ({ ...prev, due_date: date }))}
                   initialFocus
                   className="p-3 pointer-events-auto"
                 />

@@ -34,11 +34,10 @@ export const useTasks = () => {
 
       const tasksWithSubtasks = tasksData.map(task => ({
         ...task,
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        createdAt: new Date(task.created_at),
-        updatedAt: task.updated_at ? new Date(task.updated_at) : undefined,
-        lastCompletedAt: task.last_completed_at ? new Date(task.last_completed_at) : undefined,
-        order: task.order_index,
+        due_date: task.due_date ? new Date(task.due_date) : undefined,
+        created_at: new Date(task.created_at),
+        updated_at: task.updated_at ? new Date(task.updated_at) : undefined,
+        last_completed_at: task.last_completed_at ? new Date(task.last_completed_at) : undefined,
         subtasks: subtasksData.filter(subtask => subtask.task_id === task.id).map(subtask => ({
           id: subtask.id,
           title: subtask.title,
@@ -53,7 +52,7 @@ export const useTasks = () => {
 
   // Add task mutation
   const addTaskMutation = useMutation({
-    mutationFn: async (taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'order'>) => {
+    mutationFn: async (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data: task, error: taskError } = await supabase
@@ -66,7 +65,7 @@ export const useTasks = () => {
             priority: taskData.priority,
             effort: taskData.effort,
             labels: taskData.labels,
-            due_date: taskData.dueDate?.toISOString(),
+            due_date: taskData.due_date?.toISOString(),
             order_index: tasks.length,
             is_recurring: taskData.is_recurring,
             recurrence_interval: taskData.recurrence_interval,
@@ -121,11 +120,11 @@ export const useTasks = () => {
           priority: updates.priority,
           effort: updates.effort,
           labels: updates.labels,
-          due_date: updates.dueDate?.toISOString(),
+          due_date: updates.due_date?.toISOString(),
           completed: updates.completed,
           is_recurring: updates.is_recurring,
           recurrence_interval: updates.recurrence_interval,
-          last_completed_at: updates.lastCompletedAt?.toISOString(),
+          last_completed_at: updates.last_completed_at?.toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);
@@ -200,7 +199,7 @@ export const useTasks = () => {
     },
   });
 
-  const addTask = (taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'order'>) => {
+  const addTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     addTaskMutation.mutate(taskData);
   };
 
@@ -221,7 +220,7 @@ export const useTasks = () => {
       if (!task.completed && task.is_recurring) {
         updates = {
           completed: false,
-          lastCompletedAt: new Date(),
+          last_completed_at: new Date(),
         };
       }
       

@@ -1,3 +1,4 @@
+
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,16 +39,16 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
   };
 
   const getDueDateStatus = () => {
-    if (!task.dueDate) return null;
+    if (!task.due_date) return null;
     
-    if (isPast(task.dueDate) && !isToday(task.dueDate)) {
+    if (isPast(task.due_date) && !isToday(task.due_date)) {
       return { text: 'Overdue', class: 'text-red-600 bg-red-50' };
-    } else if (isToday(task.dueDate)) {
+    } else if (isToday(task.due_date)) {
       return { text: 'Due Today', class: 'text-orange-600 bg-orange-50' };
-    } else if (isTomorrow(task.dueDate)) {
+    } else if (isTomorrow(task.due_date)) {
       return { text: 'Due Tomorrow', class: 'text-blue-600 bg-blue-50' };
     }
-    return { text: format(task.dueDate, 'MMM d'), class: 'text-gray-600 bg-gray-50' };
+    return { text: format(task.due_date, 'MMM d'), class: 'text-gray-600 bg-gray-50' };
   };
 
   const dueDateStatus = getDueDateStatus();
