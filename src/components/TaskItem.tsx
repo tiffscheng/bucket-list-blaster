@@ -1,7 +1,7 @@
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Trash2, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, Calendar, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
 import { Task } from '@/types/Task';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -87,6 +87,13 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onToggleSubtask }: TaskIte
             <span className="text-sm text-gray-500 flex items-center gap-1">
               {getEffortIcon(task.effort)} {task.effort}
             </span>
+
+            {task.is_recurring && (
+              <span className="text-xs text-purple-700 bg-purple-100 px-2 py-1 rounded-full flex items-center gap-1">
+                <RotateCcw size={12} />
+                {task.recurrence_interval}
+              </span>
+            )}
 
             {totalSubtasks > 0 && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">

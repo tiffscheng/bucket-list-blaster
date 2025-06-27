@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,6 +27,8 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     labels: [] as string[],
     dueDate: undefined as Date | undefined,
     subtasks: [] as Subtask[],
+    is_recurring: false,
+    recurrence_interval: undefined as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined,
   });
   const [newLabel, setNewLabel] = useState('');
   const [newSubtask, setNewSubtask] = useState('');
@@ -40,6 +43,8 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         labels: [...task.labels],
         dueDate: task.dueDate,
         subtasks: [...task.subtasks],
+        is_recurring: task.is_recurring,
+        recurrence_interval: task.recurrence_interval,
       });
     }
   }, [task]);
@@ -150,6 +155,42 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Recurring Task Section */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="recurring"
+                checked={formData.is_recurring}
+                onCheckedChange={(checked) => setFormData(prev => ({ 
+                  ...prev, 
+                  is_recurring: checked,
+                  recurrence_interval: checked ? 'weekly' : undefined
+                }))}
+              />
+              <Label htmlFor="recurring">Recurring Task</Label>
+            </div>
+            
+            {formData.is_recurring && (
+              <div>
+                <Label>Recurrence Interval</Label>
+                <Select 
+                  value={formData.recurrence_interval} 
+                  onValueChange={(value: any) => setFormData(prev => ({ ...prev, recurrence_interval: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select interval" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div>
