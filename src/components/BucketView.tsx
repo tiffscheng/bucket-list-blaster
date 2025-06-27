@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, GripVertical } from 'lucide-react';
+import { Plus, GripVertical, Edit, Trash2, Check, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
 
@@ -43,13 +43,16 @@ const BucketView = ({
   onReorderTasks,
   onToggleSubtask 
 }: BucketViewProps) => {
-  const { buckets, addBucket } = useBuckets();
+  const { buckets, addBucket, updateBucket, deleteBucket } = useBuckets();
   const [showAddBucketDialog, setShowAddBucketDialog] = useState(false);
   const [newBucketName, setNewBucketName] = useState('');
   const [newBucketColor, setNewBucketColor] = useState('#3b82f6');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
+  const [editingBucket, setEditingBucket] = useState<string | null>(null);
+  const [editBucketName, setEditBucketName] = useState('');
+  const [editBucketColor, setEditBucketColor] = useState('');
 
   // Filter tasks for each bucket - General bucket shows tasks with no bucket_id
   const getFilteredTasksForBucket = (bucket: any) => {
@@ -72,6 +75,32 @@ const BucketView = ({
       setNewBucketColor('#3b82f6');
       setShowAddBucketDialog(false);
     }
+  };
+
+  const handleEditBucket = (bucket: any) => {
+    setEditingBucket(bucket.id);
+    setEditBucketName(bucket.name);
+    setEditBucketColor(bucket.color);
+  };
+
+  const handleSaveBucketEdit = (bucketId: string) => {
+    if (editBucketName.trim()) {
+      updateBucket(bucketId, {
+        name: editBucketName.trim(),
+        color: editBucketColor,
+      });
+      setEditingBucket(null);
+    }
+  };
+
+  const handleCancelBucketEdit = () => {
+    setEditingBucket(null);
+    setEditBucketName('');
+    setEditBucketColor('');
+  };
+
+  const handleDeleteBucket = (bucketId: string) => {
+    deleteBucket(bucketId);
   };
 
   const handleTaskDragStart = (e: React.DragEvent, task: Task) => {
@@ -157,6 +186,7 @@ const BucketView = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {buckets.map((bucket) => {
           const bucketTasks = getFilteredTasksForBucket(bucket);
+          const isEditing = editingBucket === bucket.id;
           
           return (
             <div
@@ -169,7 +199,7 @@ const BucketView = ({
                 }
               `}
               style={{ 
-                backgroundColor: bucket.color,
+                backgroundColor: bucket.color + '15', // Add transparency to the bucket color
                 borderColor: draggedOverBucket === bucket.id && draggedTask ? '#60a5fa' : bucket.color
               }}
               onDragOver={(e) => handleTaskDragOver(e, bucket.id)}
@@ -177,8 +207,100 @@ const BucketView = ({
               onDrop={(e) => handleTaskDrop(e, bucket.id)}
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-semibold text-white">{bucket.name}</h3>
-                <span className="text-sm text-white/80">({bucketTasks.length})</span>
+                {isEditing ? (
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      value={editBucketName}
+                      onChange={(e) => setEditBucketName(e.target.value)}
+                      className="text-lg font-semibold"
+                      onKeyPress={(e) => e.key === 'Enter' && handleSaveBucketEdit(bucket.id)}
+                    />
+                    <div className="flex gap-1">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color.value}
+                          type="button"
+                          className={`
+                            w-6 h-6 rounded-full border-2 transition-all duration-200
+                            ${editBucketColor === color.value 
+                              ? 'border-gray-800 scale-110' 
+                              : 'border-gray-300 hover:border-gray-500'
+                            }
+                          `}
+                          style={{ backgroundColor: color.value }}
+                          onClick={() => setEditBucketColor(color.value)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveBucketEdit(bucket.id)}
+                        className="h-7 px-2"
+                      >
+                        <Check size={12} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelBucketEdit}
+                        className="h-7 px-2"
+                      >
+                        <X size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-gray-700">{bucket.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: bucket.color }}
+                        />
+                        <span className="text-sm text-gray-500">({bucketTasks.length})</span>
+                      </div>
+                    </div>
+                    {!bucket.is_default && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditBucket(bucket)}
+                          className="h-6 w-6 p-0 text-gray-500 hover:text-blue-600"
+                        >
+                          <Edit size={12} />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-gray-500 hover:text-red-600"
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Bucket</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{bucket.name}"? Tasks in this bucket will be moved to the General bucket.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteBucket(bucket.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -199,7 +321,7 @@ const BucketView = ({
                   </div>
                 ))}
                 {bucketTasks.length === 0 && (
-                  <div className="text-center py-8 text-white/60">
+                  <div className="text-center py-8 text-gray-400">
                     <p className="text-sm">No tasks in this bucket</p>
                     <p className="text-xs mt-1">Drag tasks here to organize them</p>
                   </div>
