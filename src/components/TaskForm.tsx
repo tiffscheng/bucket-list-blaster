@@ -119,7 +119,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="quick">Quick (< 30min)</SelectItem>
+                  <SelectItem value="quick">Quick (&lt; 30min)</SelectItem>
                   <SelectItem value="medium">Medium (1-2 hours)</SelectItem>
                   <SelectItem value="long">Long (half day)</SelectItem>
                   <SelectItem value="massive">Massive (full day+)</SelectItem>
