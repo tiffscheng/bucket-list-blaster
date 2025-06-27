@@ -19,6 +19,21 @@ interface BucketViewProps {
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
+const colorOptions = [
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Green', value: '#10b981' },
+  { name: 'Purple', value: '#8b5cf6' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Yellow', value: '#f59e0b' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Indigo', value: '#6366f1' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'Cyan', value: '#06b6d4' },
+  { name: 'Lime', value: '#84cc16' },
+  { name: 'Emerald', value: '#059669' },
+];
+
 const BucketView = ({ 
   tasks, 
   onToggleTask, 
@@ -36,12 +51,15 @@ const BucketView = ({
   const [draggedOverBucket, setDraggedOverBucket] = useState<string | null>(null);
   const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
 
+  // Filter to show only active (non-completed) tasks
+  const activeTasks = tasks.filter(task => !task.completed);
+
   const getFilteredTasksForBucket = (bucket: any) => {
     if (bucket.is_default) {
       // General bucket shows tasks with no bucket_id or matching bucket_id
-      return tasks.filter(task => !task.bucket_id || task.bucket_id === bucket.id);
+      return activeTasks.filter(task => !task.bucket_id || task.bucket_id === bucket.id);
     }
-    return tasks.filter(task => task.bucket_id === bucket.id);
+    return activeTasks.filter(task => task.bucket_id === bucket.id);
   };
 
   const handleAddBucket = () => {
@@ -146,12 +164,16 @@ const BucketView = ({
             <div
               key={bucket.id}
               className={`
-                bg-white rounded-lg border-2 p-4 min-h-[200px] transition-all duration-200
+                rounded-lg border-2 border-dashed p-4 min-h-[200px] transition-all duration-200
                 ${draggedOverBucket === bucket.id && draggedTask 
-                  ? 'border-blue-400 bg-blue-50 shadow-lg' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-400 shadow-lg scale-105' 
+                  : 'border-gray-300 hover:border-gray-400'
                 }
               `}
+              style={{ 
+                backgroundColor: bucket.color + '15', // Add transparency to the bucket color
+                borderColor: draggedOverBucket === bucket.id && draggedTask ? '#60a5fa' : bucket.color
+              }}
               onDragOver={(e) => handleTaskDragOver(e, bucket.id)}
               onDragLeave={handleTaskDragLeave}
               onDrop={(e) => handleTaskDrop(e, bucket.id)}
@@ -160,7 +182,7 @@ const BucketView = ({
                 <h3 className="text-lg font-semibold text-gray-700">{bucket.name}</h3>
                 <div className="flex items-center gap-2">
                   <span
-                    className="w-5 h-5 rounded-full"
+                    className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: bucket.color }}
                   />
                   <span className="text-sm text-gray-500">({bucketTasks.length})</span>
@@ -217,16 +239,27 @@ const BucketView = ({
               />
             </div>
             <div>
-              <label htmlFor="bucket-color" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Bucket Color
               </label>
-              <Input
-                id="bucket-color"
-                type="color"
-                value={newBucketColor}
-                onChange={(e) => setNewBucketColor(e.target.value)}
-                className="w-20 h-10"
-              />
+              <div className="grid grid-cols-6 gap-2">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    className={`
+                      w-8 h-8 rounded-full border-2 transition-all duration-200
+                      ${newBucketColor === color.value 
+                        ? 'border-gray-800 scale-110 shadow-lg' 
+                        : 'border-gray-300 hover:border-gray-500'
+                      }
+                    `}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                    onClick={() => setNewBucketColor(color.value)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
