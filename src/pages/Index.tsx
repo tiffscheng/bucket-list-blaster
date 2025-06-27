@@ -30,9 +30,11 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              Task<span className="text-blue-600">Flow</span>
-            </h1>
+            <img 
+              src="/lovable-uploads/04daeea1-d538-4974-a387-2208c197cd84.png" 
+              alt="TaskFlow" 
+              className="h-12 mb-2"
+            />
             <p className="text-gray-600">Organize your tasks, manage your time, achieve your goals</p>
             {!user && (
               <p className="text-sm text-amber-600 mt-2 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
