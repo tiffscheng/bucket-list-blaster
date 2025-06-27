@@ -358,7 +358,7 @@ const CalendarView = () => {
               <p className="text-gray-500 text-sm">No recurring tasks</p>
             ) : (
               <div className="space-y-3">
-                {[...monthlyRecurringTasks, ...yearlyRecurringTasks].map((task) => (
+                {recurringTasks.map((task) => (
                   <div key={task.id} className="bg-white p-3 rounded-lg border">
                     <div className="flex items-start gap-2 mb-2">
                       <div className={cn(

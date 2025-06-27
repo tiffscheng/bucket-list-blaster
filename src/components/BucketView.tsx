@@ -41,10 +41,7 @@ const BucketView = ({
   const [draggedOverBucketOrder, setDraggedOverBucketOrder] = useState<number | null>(null);
   
   const [buckets, setBuckets] = useState<CustomBucket[]>([
-    { id: 'urgent', name: 'Urgent', color: '#ef4444', priority: 'urgent', order: 0, isDefault: true },
-    { id: 'high', name: 'High Priority', color: '#f97316', priority: 'high', order: 1, isDefault: true },
-    { id: 'medium', name: 'Medium Priority', color: '#eab308', priority: 'medium', order: 2, isDefault: true },
-    { id: 'low', name: 'Low Priority', color: '#22c55e', priority: 'low', order: 3, isDefault: true },
+    { id: 'general', name: 'General Tasks', color: '#3b82f6', order: 0, isDefault: true },
   ]);
   
   const [newBucketName, setNewBucketName] = useState('');
@@ -57,6 +54,14 @@ const BucketView = ({
   const getTasksForBucket = (bucket: CustomBucket) => {
     if (bucket.priority) {
       return tasks.filter(task => task.priority === bucket.priority);
+    }
+    if (bucket.isDefault) {
+      // Default bucket shows tasks without specific labels or with the bucket name as label
+      return tasks.filter(task => 
+        task.labels.length === 0 || 
+        task.labels.includes(bucket.name) ||
+        !buckets.some(b => !b.isDefault && task.labels.includes(b.name))
+      );
     }
     // For custom buckets, we'll use labels to categorize tasks
     return tasks.filter(task => task.labels.includes(bucket.name));
@@ -89,6 +94,9 @@ const BucketView = ({
   };
 
   const deleteBucket = (bucketId: string) => {
+    const bucketToDelete = buckets.find(b => b.id === bucketId);
+    if (bucketToDelete?.isDefault) return; // Prevent deleting default bucket
+    
     setBuckets(buckets => buckets.filter(bucket => bucket.id !== bucketId));
   };
 
@@ -119,7 +127,7 @@ const BucketView = ({
     
     if (bucket.priority) {
       updatedTask.priority = bucket.priority as Task['priority'];
-    } else {
+    } else if (!bucket.isDefault) {
       // For custom buckets, add the bucket name as a label
       if (!updatedTask.labels.includes(bucket.name)) {
         updatedTask.labels = [...updatedTask.labels, bucket.name];

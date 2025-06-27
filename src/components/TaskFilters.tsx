@@ -7,6 +7,14 @@ import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Check, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface TaskFiltersProps {
   filters: TTaskFilters;
@@ -179,37 +187,47 @@ const TaskFilters = ({ filters, onFiltersChange, sortBy, onSortChange }: TaskFil
 
         <div>
           <Label className="text-sm font-medium mb-2 block">Labels</Label>
-          <div className="flex flex-wrap gap-2">
-            {allLabels.length === 0 ? (
-              <p className="text-sm text-gray-500">No labels available</p>
-            ) : (
-              <>
+          {allLabels.length === 0 ? (
+            <p className="text-sm text-gray-500">No labels available</p>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {selectedLabels.length === 0 
+                    ? "Select labels" 
+                    : selectedLabels.length === 1 
+                    ? selectedLabels[0]
+                    : `${selectedLabels.length} labels selected`
+                  }
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full min-w-[200px]" align="start">
                 {allLabels.map((label) => (
-                  <Badge
+                  <DropdownMenuCheckboxItem
                     key={label}
-                    variant={selectedLabels.includes(label) ? "default" : "outline"}
-                    className={cn(
-                      "cursor-pointer transition-all hover:scale-105",
-                      selectedLabels.includes(label) ? "bg-blue-500 text-white" : "hover:bg-gray-100"
-                    )}
-                    onClick={() => handleLabelChange(label, !selectedLabels.includes(label))}
+                    checked={selectedLabels.includes(label)}
+                    onCheckedChange={(checked) => handleLabelChange(label, checked)}
                   >
                     {label}
-                  </Badge>
+                  </DropdownMenuCheckboxItem>
                 ))}
                 {selectedLabels.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllLabels}
-                    className="text-xs h-6 px-2"
-                  >
-                    Clear All
-                  </Button>
+                  <>
+                    <DropdownMenuSeparator />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllLabels}
+                      className="w-full text-left justify-start h-8"
+                    >
+                      Clear All
+                    </Button>
+                  </>
                 )}
-              </>
-            )}
-          </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </div>
