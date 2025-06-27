@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Task, Subtask } from '@/types/Task';
 import { sanitizeTextInput, INPUT_LIMITS, containsOnlyAllowedChars } from '@/utils/security';
 import { useToast } from '@/hooks/use-toast';
+import TaskFormBasicFields from './TaskFormBasicFields';
 
 interface TaskFormProps {
   task?: Task | null;
@@ -33,11 +34,16 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     recurrence_interval: undefined as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined,
     user_id: undefined as string | undefined,
     updated_at: undefined as Date | undefined,
+    bucket_id: undefined as string | undefined,
   });
   const [newLabel, setNewLabel] = useState('');
   const [newSubtask, setNewSubtask] = useState('');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
+
+  // Check if this is a duplicate task (has a temporary ID)
+  const isDuplicateTask = task?.id === 'duplicate-temp';
+  const isEditingTask = task && !isDuplicateTask;
 
   useEffect(() => {
     if (task) {
@@ -53,6 +59,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         recurrence_interval: task.recurrence_interval,
         user_id: task.user_id,
         updated_at: task.updated_at,
+        bucket_id: task.bucket_id,
       });
     }
   }, [task]);
@@ -93,7 +100,6 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     e.preventDefault();
     
     try {
-      // Validate and sanitize all inputs
       const sanitizedTitle = sanitizeTextInput(formData.title, INPUT_LIMITS.TITLE);
       const sanitizedDescription = sanitizeTextInput(formData.description, INPUT_LIMITS.DESCRIPTION);
       
@@ -106,12 +112,10 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
         return;
       }
 
-      // Sanitize labels
       const sanitizedLabels = formData.labels.map(label => 
         sanitizeTextInput(label, INPUT_LIMITS.LABEL)
       );
 
-      // Sanitize subtasks
       const sanitizedSubtasks = formData.subtasks.map(subtask => ({
         ...subtask,
         title: sanitizeTextInput(subtask.title, INPUT_LIMITS.SUBTASK_TITLE)
@@ -200,73 +204,18 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">
-          {task ? 'Edit Task' : 'Add New Task'}
+          {isEditingTask ? 'Edit Task' : 'Add New Task'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title * ({formData.title.length}/{INPUT_LIMITS.TITLE})</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={handleTitleChange}
-              placeholder="Enter task title..."
-              maxLength={INPUT_LIMITS.TITLE}
-              required
-              className={errors.title ? 'border-red-500' : ''}
-            />
-            {errors.title && (
-              <p className="text-sm text-red-600 mt-1">{errors.title}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description ({formData.description.length}/{INPUT_LIMITS.DESCRIPTION})</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={handleDescriptionChange}
-              placeholder="Enter task description..."
-              maxLength={INPUT_LIMITS.DESCRIPTION}
-              rows={3}
-              className={errors.description ? 'border-red-500' : ''}
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600 mt-1">{errors.description}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Priority</Label>
-              <Select value={formData.priority} onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Effort</Label>
-              <Select value={formData.effort} onValueChange={(value: any) => setFormData(prev => ({ ...prev, effort: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="quick">Quick (&lt; 30min)</SelectItem>
-                  <SelectItem value="medium">Medium (1-2 hours)</SelectItem>
-                  <SelectItem value="long">Long (half day)</SelectItem>
-                  <SelectItem value="massive">Massive (full day+)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <TaskFormBasicFields
+            formData={formData}
+            errors={errors}
+            onTitleChange={handleTitleChange}
+            onDescriptionChange={handleDescriptionChange}
+            onPriorityChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}
+            onEffortChange={(value: any) => setFormData(prev => ({ ...prev, effort: value }))}
+          />
 
           {/* Recurring Task Section */}
           <div className="space-y-3">
@@ -395,7 +344,7 @@ const TaskForm = ({ task, onSubmit, onCancel }: TaskFormProps) => {
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" className="flex-1" disabled={hasErrors}>
-              {task ? 'Update Task' : 'Add Task'}
+              {isEditingTask ? 'Update Task' : 'Add Task'}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel

@@ -1,7 +1,7 @@
 
 import { useMemo, useState } from 'react';
-import TaskItem from './TaskItem';
 import BucketView from './BucketView';
+import TaskListView from './TaskListView';
 import { Task, TaskFilters } from '@/types/Task';
 import { Button } from '@/components/ui/button';
 import { Grid, List } from 'lucide-react';
@@ -30,8 +30,6 @@ const TaskList = ({
   onToggleSubtask
 }: TaskListProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'buckets'>('list');
-  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
-  const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
@@ -63,46 +61,6 @@ const TaskList = ({
 
   const activeTasks = filteredAndSortedTasks.filter(task => !task.completed);
   const completedTasks = filteredAndSortedTasks.filter(task => task.completed);
-
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
-    setDraggedTask(task);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', '');
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDraggedOverIndex(index);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if we're leaving the entire drop zone
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDraggedOverIndex(null);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (!draggedTask) return;
-
-    const otherTasks = tasks.filter(task => task.id !== draggedTask.id);
-    const reorderedTasks = [
-      ...otherTasks.slice(0, targetIndex),
-      draggedTask,
-      ...otherTasks.slice(targetIndex)
-    ].map((task, index) => ({ ...task, order_index: index }));
-
-    onReorderTasks(reorderedTasks);
-    setDraggedTask(null);
-    setDraggedOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedTask(null);
-    setDraggedOverIndex(null);
-  };
 
   if (filteredAndSortedTasks.length === 0) {
     return (
@@ -152,40 +110,15 @@ const TaskList = ({
               onToggleSubtask={onToggleSubtask}
             />
           ) : (
-            <div className="space-y-2">
-              {activeTasks.map((task, index) => (
-                <div
-                  key={task.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, task)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
-                  onDragEnd={handleDragEnd}
-                  className={`
-                    transition-all duration-200 ease-in-out cursor-move
-                    ${draggedTask?.id === task.id 
-                      ? 'opacity-50 scale-95 rotate-1 shadow-lg' 
-                      : 'opacity-100 scale-100 rotate-0'
-                    }
-                    ${draggedOverIndex === index && draggedTask?.id !== task.id
-                      ? 'transform translate-y-1 shadow-md border-2 border-blue-300 border-dashed'
-                      : ''
-                    }
-                    hover:shadow-sm
-                  `}
-                >
-                  <TaskItem
-                    task={task}
-                    onToggle={onToggleTask}
-                    onEdit={onEditTask}
-                    onDelete={onDeleteTask}
-                    onDuplicate={onDuplicateTask}
-                    onToggleSubtask={onToggleSubtask}
-                  />
-                </div>
-              ))}
-            </div>
+            <TaskListView
+              tasks={activeTasks}
+              onToggleTask={onToggleTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              onDuplicateTask={onDuplicateTask}
+              onReorderTasks={onReorderTasks}
+              onToggleSubtask={onToggleSubtask}
+            />
           )}
         </div>
       )}
@@ -195,19 +128,15 @@ const TaskList = ({
           <h3 className="text-lg font-semibold text-gray-700 mb-3">
             Completed Tasks ({completedTasks.length})
           </h3>
-          <div className="space-y-2">
-            {completedTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={onToggleTask}
-                onEdit={onEditTask}
-                onDelete={onDeleteTask}
-                onDuplicate={onDuplicateTask}
-                onToggleSubtask={onToggleSubtask}
-              />
-            ))}
-          </div>
+          <TaskListView
+            tasks={completedTasks}
+            onToggleTask={onToggleTask}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
+            onDuplicateTask={onDuplicateTask}
+            onReorderTasks={onReorderTasks}
+            onToggleSubtask={onToggleSubtask}
+          />
         </div>
       )}
     </div>

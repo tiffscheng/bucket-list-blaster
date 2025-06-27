@@ -1,11 +1,14 @@
-import { format, isToday, isTomorrow, isPast } from 'date-fns';
-import { Button } from '@/components/ui/button';
+
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Trash2, Calendar, ChevronDown, ChevronRight, RotateCcw, Copy } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Task } from '@/types/Task';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import { sanitizeHtml } from '@/utils/security';
+import TaskPriorityBadge from './TaskPriorityBadge';
+import TaskEffortIndicator from './TaskEffortIndicator';
+import TaskDueDate from './TaskDueDate';
+import TaskSubtasks from './TaskSubtasks';
+import TaskActions from './TaskActions';
 
 interface TaskItemProps {
   task: Task;
@@ -17,48 +20,8 @@ interface TaskItemProps {
 }
 
 const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubtask }: TaskItemProps) => {
-  const [showSubtasks, setShowSubtasks] = useState(false);
-
-  // Safely display user content by sanitizing it
   const safeTitle = sanitizeHtml(task.title);
   const safeDescription = task.description ? sanitizeHtml(task.description) : '';
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getEffortIcon = (effort: string) => {
-    switch (effort) {
-      case 'quick': return '⚡';
-      case 'medium': return '⏰';
-      case 'long': return '📅';
-      case 'massive': return '🏔️';
-      default: return '⏰';
-    }
-  };
-
-  const getDueDateStatus = () => {
-    if (!task.due_date) return null;
-    
-    if (isPast(task.due_date) && !isToday(task.due_date)) {
-      return { text: 'Overdue', class: 'text-red-600 bg-red-50' };
-    } else if (isToday(task.due_date)) {
-      return { text: 'Due Today', class: 'text-orange-600 bg-orange-50' };
-    } else if (isTomorrow(task.due_date)) {
-      return { text: 'Due Tomorrow', class: 'text-blue-600 bg-blue-50' };
-    }
-    return { text: format(task.due_date, 'MMM d'), class: 'text-gray-600 bg-gray-50' };
-  };
-
-  const dueDateStatus = getDueDateStatus();
-  const completedSubtasks = task.subtasks.filter(s => s.completed).length;
-  const totalSubtasks = task.subtasks.length;
 
   return (
     <div className={cn(
@@ -83,27 +46,13 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubta
               {safeTitle}
             </h3>
             
-            <span className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium border",
-              getPriorityColor(task.priority)
-            )}>
-              {task.priority}
-            </span>
-            
-            <span className="text-sm text-gray-500 flex items-center gap-1">
-              {getEffortIcon(task.effort)} {task.effort}
-            </span>
+            <TaskPriorityBadge priority={task.priority} />
+            <TaskEffortIndicator effort={task.effort} />
 
             {task.is_recurring && (
               <span className="text-xs text-purple-700 bg-purple-100 px-2 py-1 rounded-full flex items-center gap-1">
                 <RotateCcw size={12} />
                 {task.recurrence_interval}
-              </span>
-            )}
-
-            {totalSubtasks > 0 && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                {completedSubtasks}/{totalSubtasks} subtasks
               </span>
             )}
           </div>
@@ -127,78 +76,22 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubta
               </span>
             ))}
             
-            {dueDateStatus && (
-              <span className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
-                dueDateStatus.class
-              )}>
-                <Calendar size={12} />
-                {dueDateStatus.text}
-              </span>
-            )}
+            <TaskDueDate due_date={task.due_date} />
           </div>
 
-          {totalSubtasks > 0 && (
-            <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSubtasks(!showSubtasks)}
-                className="p-0 h-auto text-xs text-gray-600 hover:text-gray-800"
-              >
-                {showSubtasks ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                {showSubtasks ? 'Hide' : 'Show'} subtasks
-              </Button>
-
-              {showSubtasks && (
-                <div className="mt-2 space-y-1 pl-4 border-l-2 border-gray-200">
-                  {task.subtasks.map((subtask) => (
-                    <div key={subtask.id} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={subtask.completed}
-                        onCheckedChange={() => onToggleSubtask?.(task.id, subtask.id)}
-                        className="h-3 w-3"
-                      />
-                      <span className={cn(
-                        "text-sm",
-                        subtask.completed ? "line-through text-gray-400" : "text-gray-700"
-                      )}>
-                        {sanitizeHtml(subtask.title)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <TaskSubtasks 
+            subtasks={task.subtasks}
+            taskId={task.id}
+            onToggleSubtask={onToggleSubtask}
+          />
         </div>
 
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(task)}
-            className="h-8 w-8 p-0"
-          >
-            <Edit size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDuplicate(task)}
-            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-          >
-            <Copy size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(task.id)}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TaskActions
+          task={task}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+        />
       </div>
     </div>
   );

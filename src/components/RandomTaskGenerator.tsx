@@ -1,12 +1,12 @@
+
 import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Shuffle, Sparkles } from 'lucide-react';
 import { Task, TaskFilters } from '@/types/Task';
 import TaskItem from './TaskItem';
 import TaskForm from './TaskForm';
+import RandomTaskFilters from './RandomTaskFilters';
 
 const RandomTaskGenerator = () => {
   const { tasks, updateTask, deleteTask, toggleTask, addTask } = useTasks();
@@ -37,7 +37,6 @@ const RandomTaskGenerator = () => {
 
     setIsGenerating(true);
     
-    // Add some suspense with a delay
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * filteredTasks.length);
       const randomTask = filteredTasks[randomIndex];
@@ -54,6 +53,7 @@ const RandomTaskGenerator = () => {
       effort: task.effort,
       labels: [...task.labels],
       due_date: task.due_date,
+      bucket_id: task.bucket_id,
       subtasks: task.subtasks.map(subtask => ({
         id: crypto.randomUUID(),
         title: subtask.title,
@@ -65,7 +65,6 @@ const RandomTaskGenerator = () => {
       updated_at: task.updated_at,
     };
     
-    // Create a mock task object for the form
     setDuplicatingTask({
       ...duplicatedTaskData,
       id: 'duplicate-temp',
@@ -100,100 +99,15 @@ const RandomTaskGenerator = () => {
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-gray-50 rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-700">Filter Options</h3>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            )}
-          </div>
+        <RandomTaskFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          allLabels={allLabels}
+          filteredTasksCount={filteredTasksCount}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="priority-filter" className="text-sm font-medium">Priority</Label>
-              <Select 
-                value={filters.priority || 'all'} 
-                onValueChange={(value) => 
-                  setFilters({ 
-                    ...filters, 
-                    priority: value === 'all' ? undefined : value as any 
-                  })
-                }
-              >
-                <SelectTrigger id="priority-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Priority</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="effort-filter" className="text-sm font-medium">Effort</Label>
-              <Select 
-                value={filters.effort || 'all'} 
-                onValueChange={(value) => 
-                  setFilters({ 
-                    ...filters, 
-                    effort: value === 'all' ? undefined : value as any 
-                  })
-                }
-              >
-                <SelectTrigger id="effort-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Effort</SelectItem>
-                  <SelectItem value="quick">Quick</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="long">Long</SelectItem>
-                  <SelectItem value="massive">Massive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {allLabels.length > 0 && (
-              <div>
-                <Label htmlFor="label-filter" className="text-sm font-medium">Label</Label>
-                <Select 
-                  value={filters.label || 'all'} 
-                  onValueChange={(value) => 
-                    setFilters({ 
-                      ...filters, 
-                      label: value === 'all' ? undefined : value 
-                    })
-                  }
-                >
-                  <SelectTrigger id="label-filter">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any Label</SelectItem>
-                    {allLabels.map((label) => (
-                      <SelectItem key={label} value={label}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 text-sm text-gray-600">
-            <span className="font-medium">{filteredTasksCount}</span> tasks match your current filters
-          </div>
-        </div>
-
-        {/* Generate Button */}
         <div className="text-center mb-8">
           <Button
             onClick={generateRandomTask}
@@ -214,7 +128,6 @@ const RandomTaskGenerator = () => {
           </Button>
         </div>
 
-        {/* Selected Task */}
         {selectedTask && !isGenerating && (
           <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden">
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 text-center">
