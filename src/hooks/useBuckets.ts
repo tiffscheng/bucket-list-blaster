@@ -95,9 +95,12 @@ export const useBuckets = () => {
     if (!user) return;
 
     try {
+      // Filter out date fields that Supabase manages automatically
+      const { created_at, updated_at, ...safeUpdates } = updates;
+      
       const { data, error } = await supabase
         .from('buckets')
-        .update(updates)
+        .update(safeUpdates)
         .eq('id', bucketId)
         .eq('user_id', user.id)
         .select()
