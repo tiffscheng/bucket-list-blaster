@@ -106,25 +106,30 @@ const BucketView = ({
     deleteBucket(bucketId);
   };
 
-  // Bucket drag and drop handlers
+  // Bucket drag and drop handlers (only for non-default buckets)
   const handleBucketDragStart = (e: React.DragEvent, bucket: any) => {
+    if (bucket.is_default) return;
     setDraggedBucket(bucket);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleBucketDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    if (!draggedBucket || draggedBucket.is_default) return;
     e.dataTransfer.dropEffect = 'move';
     setDraggedOverBucketIndex(index);
   };
 
-  const handleBucketDragLeave = () => {
-    setDraggedOverBucketIndex(null);
+  const handleBucketDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the bucket container entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDraggedOverBucketIndex(null);
+    }
   };
 
   const handleBucketDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    if (!draggedBucket) return;
+    if (!draggedBucket || draggedBucket.is_default) return;
 
     const currentIndex = buckets.findIndex(b => b.id === draggedBucket.id);
     if (currentIndex === dropIndex) return;
@@ -156,12 +161,16 @@ const BucketView = ({
     setDraggedOverBucket(bucketId);
   };
 
-  const handleTaskDragLeave = () => {
-    setDraggedOverBucket(null);
+  const handleTaskDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the bucket container entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDraggedOverBucket(null);
+    }
   };
 
   const handleTaskDrop = (e: React.DragEvent, bucketId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!draggedTask) return;
 
     const bucket = buckets.find(b => b.id === bucketId);
@@ -229,28 +238,46 @@ const BucketView = ({
         {buckets.map((bucket, index) => {
           const bucketTasks = getFilteredTasksForBucket(bucket);
           const isEditing = editingBucket === bucket.id;
-          const isDraggedOver = draggedOverBucketIndex === index && draggedBucket;
+          const isDraggedOver = draggedOverBucketIndex === index && draggedBucket && !draggedBucket.is_default;
+          const isTaskDraggedOver = draggedOverBucket === bucket.id && draggedTask;
           
           return (
             <div
               key={bucket.id}
               draggable={!bucket.is_default && !isEditing}
-              onDragStart={(e) => !bucket.is_default && handleBucketDragStart(e, bucket)}
-              onDragOver={(e) => handleBucketDragOver(e, index)}
-              onDragLeave={handleBucketDragLeave}
-              onDrop={(e) => handleBucketDrop(e, index)}
-              className={`
-                rounded-lg border-2 border-dashed p-4 min-h-[200px] transition-all duration-200
-                ${isDraggedOver 
-                  ? 'border-blue-400 shadow-lg scale-105' 
-                  : draggedOverBucket === bucket.id && draggedTask 
-                    ? 'border-blue-400 shadow-lg scale-105' 
-                    : 'border-gray-300 hover:border-gray-400'
+              onDragStart={(e) => handleBucketDragStart(e, bucket)}
+              onDragOver={(e) => {
+                if (draggedTask) {
+                  handleTaskDragOver(e, bucket.id);
+                } else if (draggedBucket && !draggedBucket.is_default) {
+                  handleBucketDragOver(e, index);
                 }
+              }}
+              onDragLeave={(e) => {
+                if (draggedTask) {
+                  handleTaskDragLeave(e);
+                } else if (draggedBucket && !draggedBucket.is_default) {
+                  handleBucketDragLeave(e);
+                }
+              }}
+              onDrop={(e) => {
+                if (draggedTask) {
+                  handleTaskDrop(e, bucket.id);
+                } else if (draggedBucket && !draggedBucket.is_default) {
+                  handleBucketDrop(e, index);
+                }
+              }}
+              className={`
+                rounded-lg border-2 p-4 min-h-[200px] transition-all duration-200
+                ${isDraggedOver || isTaskDraggedOver
+                  ? 'border-blue-400 shadow-lg scale-105 border-solid' 
+                  : 'border-dashed border-gray-300 hover:border-gray-400'
+                }
+                ${!bucket.is_default && !isEditing ? 'cursor-grab' : ''}
               `}
               style={{ 
                 backgroundColor: bucket.color + '15', // Add transparency to the bucket color
-                borderColor: isDraggedOver || (draggedOverBucket === bucket.id && draggedTask) ? '#60a5fa' : bucket.color
+                borderColor: (isDraggedOver || isTaskDraggedOver) ? '#60a5fa' : bucket.color
               }}
             >
               <div className="flex items-start justify-between mb-3">
@@ -259,7 +286,7 @@ const BucketView = ({
                     <Input
                       value={editBucketName}
                       onChange={(e) => setEditBucketName(e.target.value)}
-                      className="text-lg font-semibold max-w-full"
+                      className="text-lg font-semibold"
                       onKeyPress={(e) => e.key === 'Enter' && handleSaveBucketEdit(bucket.id)}
                     />
                     <div className="flex flex-wrap gap-1">
@@ -353,6 +380,7 @@ const BucketView = ({
                     key={task.id}
                     draggable
                     onDragStart={(e) => handleTaskDragStart(e, task)}
+                    className="cursor-grab"
                   >
                     <TaskItem
                       task={task}
