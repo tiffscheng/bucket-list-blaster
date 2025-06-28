@@ -18,9 +18,19 @@ interface TaskItemProps {
   onDuplicate: (task: Task) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   hideActions?: boolean;
+  useDropdownActions?: boolean;
 }
 
-const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubtask, hideActions = false }: TaskItemProps) => {
+const TaskItem = ({ 
+  task, 
+  onToggle, 
+  onEdit, 
+  onDelete, 
+  onDuplicate, 
+  onToggleSubtask, 
+  hideActions = false,
+  useDropdownActions = false 
+}: TaskItemProps) => {
   const safeTitle = sanitizeHtml(task.title);
   const safeDescription = task.description ? sanitizeHtml(task.description) : '';
 
@@ -93,6 +103,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete, onDuplicate, onToggleSubta
             onEdit={onEdit}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            useDropdown={useDropdownActions}
           />
         )}
       </div>

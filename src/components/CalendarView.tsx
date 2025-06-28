@@ -64,8 +64,8 @@ const CalendarView = () => {
     const dayTasks = getTasksForDate(currentDate);
     
     return (
-      <div className="flex gap-6 h-full">
-        <div className="flex-1">
+      <div className="flex flex-col lg:flex-row gap-6 h-full">
+        <div className="flex-1 w-full lg:w-auto">
           <div className="bg-white rounded-lg border p-6 min-h-96">
             <h3 className="text-lg font-semibold mb-4">
               Tasks for {format(currentDate, 'EEEE, MMMM d, yyyy')}
@@ -104,7 +104,7 @@ const CalendarView = () => {
           </div>
         </div>
 
-        <div className="w-80">
+        <div className="w-full lg:w-80">
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <RotateCcw size={18} />
@@ -147,8 +147,8 @@ const CalendarView = () => {
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
     return (
-      <div className="flex gap-6 h-full">
-        <div className="flex-1">
+      <div className="flex flex-col lg:flex-row gap-6 h-full">
+        <div className="flex-1 w-full lg:w-auto">
           <div className="bg-white rounded-lg border p-6 min-h-96">
             <h3 className="text-lg font-semibold mb-4">
               Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
@@ -197,7 +197,7 @@ const CalendarView = () => {
           </div>
         </div>
 
-        <div className="w-80">
+        <div className="w-full lg:w-80">
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <RotateCcw size={18} />

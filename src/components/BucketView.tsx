@@ -44,7 +44,7 @@ const BucketView = ({
   onReorderTasks,
   onToggleSubtask 
 }: BucketViewProps) => {
-  const { buckets, addBucket, updateBucket, deleteBucket } = useBuckets();
+  const { buckets, addBucket, updateBucket, deleteBucket, reorderBuckets } = useBuckets();
   const [showAddBucketDialog, setShowAddBucketDialog] = useState(false);
   const [newBucketName, setNewBucketName] = useState('');
   const [newBucketColor, setNewBucketColor] = useState('#3b82f6');
@@ -54,6 +54,8 @@ const BucketView = ({
   const [editingBucket, setEditingBucket] = useState<string | null>(null);
   const [editBucketName, setEditBucketName] = useState('');
   const [editBucketColor, setEditBucketColor] = useState('');
+  const [draggedBucket, setDraggedBucket] = useState<any>(null);
+  const [draggedOverBucketIndex, setDraggedOverBucketIndex] = useState<number | null>(null);
 
   // Filter tasks for each bucket - General bucket shows tasks with no bucket_id
   const getFilteredTasksForBucket = (bucket: any) => {
@@ -104,6 +106,45 @@ const BucketView = ({
     deleteBucket(bucketId);
   };
 
+  // Bucket drag and drop handlers
+  const handleBucketDragStart = (e: React.DragEvent, bucket: any) => {
+    setDraggedBucket(bucket);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleBucketDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDraggedOverBucketIndex(index);
+  };
+
+  const handleBucketDragLeave = () => {
+    setDraggedOverBucketIndex(null);
+  };
+
+  const handleBucketDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (!draggedBucket) return;
+
+    const currentIndex = buckets.findIndex(b => b.id === draggedBucket.id);
+    if (currentIndex === dropIndex) return;
+
+    const reorderedBuckets = [...buckets];
+    const [removed] = reorderedBuckets.splice(currentIndex, 1);
+    reorderedBuckets.splice(dropIndex, 0, removed);
+
+    // Update order_index for all buckets
+    const updatedBuckets = reorderedBuckets.map((bucket, index) => ({
+      ...bucket,
+      order_index: index
+    }));
+
+    reorderBuckets(updatedBuckets);
+    setDraggedBucket(null);
+    setDraggedOverBucketIndex(null);
+  };
+
+  // Task drag and drop handlers
   const handleTaskDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
@@ -185,27 +226,32 @@ const BucketView = ({
 
       {/* Bucket Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {buckets.map((bucket) => {
+        {buckets.map((bucket, index) => {
           const bucketTasks = getFilteredTasksForBucket(bucket);
           const isEditing = editingBucket === bucket.id;
+          const isDraggedOver = draggedOverBucketIndex === index && draggedBucket;
           
           return (
             <div
               key={bucket.id}
+              draggable={!bucket.is_default && !isEditing}
+              onDragStart={(e) => !bucket.is_default && handleBucketDragStart(e, bucket)}
+              onDragOver={(e) => handleBucketDragOver(e, index)}
+              onDragLeave={handleBucketDragLeave}
+              onDrop={(e) => handleBucketDrop(e, index)}
               className={`
                 rounded-lg border-2 border-dashed p-4 min-h-[200px] transition-all duration-200
-                ${draggedOverBucket === bucket.id && draggedTask 
+                ${isDraggedOver 
                   ? 'border-blue-400 shadow-lg scale-105' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  : draggedOverBucket === bucket.id && draggedTask 
+                    ? 'border-blue-400 shadow-lg scale-105' 
+                    : 'border-gray-300 hover:border-gray-400'
                 }
               `}
               style={{ 
                 backgroundColor: bucket.color + '15', // Add transparency to the bucket color
-                borderColor: draggedOverBucket === bucket.id && draggedTask ? '#60a5fa' : bucket.color
+                borderColor: isDraggedOver || (draggedOverBucket === bucket.id && draggedTask) ? '#60a5fa' : bucket.color
               }}
-              onDragOver={(e) => handleTaskDragOver(e, bucket.id)}
-              onDragLeave={handleTaskDragLeave}
-              onDrop={(e) => handleTaskDrop(e, bucket.id)}
             >
               <div className="flex items-start justify-between mb-3">
                 {isEditing ? (
@@ -213,10 +259,10 @@ const BucketView = ({
                     <Input
                       value={editBucketName}
                       onChange={(e) => setEditBucketName(e.target.value)}
-                      className="text-lg font-semibold"
+                      className="text-lg font-semibold max-w-full"
                       onKeyPress={(e) => e.key === 'Enter' && handleSaveBucketEdit(bucket.id)}
                     />
-                    <div className="flex flex-wrap gap-1 max-w-full">
+                    <div className="flex flex-wrap gap-1">
                       {colorOptions.map((color) => (
                         <button
                           key={color.value}
@@ -254,6 +300,9 @@ const BucketView = ({
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
+                      {!bucket.is_default && (
+                        <GripVertical size={16} className="text-gray-400 cursor-grab" />
+                      )}
                       <h3 className="text-lg font-semibold text-gray-700">{bucket.name}</h3>
                       <span className="text-sm text-gray-500">({bucketTasks.length})</span>
                     </div>
@@ -312,7 +361,7 @@ const BucketView = ({
                       onDelete={onDeleteTask}
                       onDuplicate={handleDuplicateTask}
                       onToggleSubtask={onToggleSubtask}
-                      hideActions={true}
+                      useDropdownActions={true}
                     />
                   </div>
                 ))}
@@ -358,7 +407,7 @@ const BucketView = ({
                     key={color.value}
                     type="button"
                     className={`
-                      w-8 h-8 rounded-full border-2 transition-all duration-200
+                      w-6 h-6 rounded-full border-2 transition-all duration-200
                       ${newBucketColor === color.value 
                         ? 'border-gray-800 scale-110 shadow-lg' 
                         : 'border-gray-300 hover:border-gray-500'

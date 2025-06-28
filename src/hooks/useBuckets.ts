@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export interface Bucket {
   id: string;
@@ -11,265 +10,184 @@ export interface Bucket {
   color: string;
   order_index: number;
   is_default: boolean;
-  user_id?: string;
+  user_id: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
-const LOCAL_STORAGE_KEY = 'taskflow-buckets';
-
 export const useBuckets = () => {
+  const [buckets, setBuckets] = useState<Bucket[]>([]);
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [localBuckets, setLocalBuckets] = useState<Bucket[]>([]);
 
-  // Load local buckets from localStorage on mount
   useEffect(() => {
-    if (!user) {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsedBuckets = JSON.parse(stored);
-          setLocalBuckets(parsedBuckets);
-        } catch (error) {
-          console.error('Error parsing local buckets:', error);
-          // Create default bucket if parsing fails
-          const defaultBucket: Bucket = {
-            id: 'default-general',
-            name: 'General',
-            color: '#3b82f6',
-            order_index: 0,
-            is_default: true,
-          };
-          setLocalBuckets([defaultBucket]);
-        }
-      } else {
-        // Create default bucket if no stored buckets
-        const defaultBucket: Bucket = {
-          id: 'default-general',
-          name: 'General',
-          color: '#3b82f6',
-          order_index: 0,
-          is_default: true,
-        };
-        setLocalBuckets([defaultBucket]);
-      }
+    if (user) {
+      fetchBuckets();
+    } else {
+      // Set default General bucket for guest users
+      setBuckets([{
+        id: 'general',
+        name: 'General',
+        color: '#6b7280',
+        order_index: 0,
+        is_default: true,
+        user_id: '',
+        created_at: new Date(),
+        updated_at: new Date()
+      }]);
     }
   }, [user]);
 
-  // Save local buckets to localStorage
-  const saveLocalBuckets = (buckets: Bucket[]) => {
-    setLocalBuckets(buckets);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(buckets));
-  };
+  const fetchBuckets = async () => {
+    if (!user) return;
 
-  // Fetch buckets from Supabase (only for authenticated users)
-  const { data: supabaseBuckets = [], isLoading } = useQuery({
-    queryKey: ['buckets', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
+    try {
       const { data, error } = await supabase
         .from('buckets')
         .select('*')
         .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
+        .order('order_index');
 
       if (error) throw error;
 
-      // If no buckets exist, create a default one
-      if (data.length === 0) {
-        const { data: newBucket, error: createError } = await supabase
-          .from('buckets')
-          .insert([{
-            user_id: user.id,
-            name: 'General',
-            color: '#3b82f6',
-            order_index: 0,
-            is_default: true,
-          }])
-          .select()
-          .single();
+      const bucketsWithDates = data.map(bucket => ({
+        ...bucket,
+        created_at: new Date(bucket.created_at),
+        updated_at: new Date(bucket.updated_at)
+      }));
 
-        if (createError) throw createError;
-        return [newBucket];
-      }
-
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Use either Supabase buckets or local buckets
-  const buckets = user ? supabaseBuckets : localBuckets;
-
-  // Local bucket operations
-  const addLocalBucket = (bucketData: Omit<Bucket, 'id'>) => {
-    const newBucket: Bucket = {
-      ...bucketData,
-      id: crypto.randomUUID(),
-    };
-    saveLocalBuckets([...localBuckets, newBucket]);
-    toast({
-      title: "Bucket added locally",
-      description: "Sign in to save your buckets permanently",
-    });
+      setBuckets(bucketsWithDates);
+    } catch (error) {
+      console.error('Error fetching buckets:', error);
+      toast.error('Failed to load buckets');
+    }
   };
 
-  const updateLocalBucket = (id: string, updates: Partial<Bucket>) => {
-    const updatedBuckets = localBuckets.map(bucket => 
-      bucket.id === id ? { ...bucket, ...updates } : bucket
-    );
-    saveLocalBuckets(updatedBuckets);
-  };
+  const addBucket = async (bucketData: Omit<Bucket, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) return;
 
-  const deleteLocalBucket = (id: string) => {
-    const updatedBuckets = localBuckets.filter(bucket => bucket.id !== id);
-    saveLocalBuckets(updatedBuckets);
-    toast({
-      title: "Bucket deleted",
-      description: "Bucket removed from local storage",
-    });
-  };
-
-  // Supabase mutations (only for authenticated users)
-  const addBucketMutation = useMutation({
-    mutationFn: async (bucketData: Omit<Bucket, 'id'>) => {
-      if (!user) throw new Error('User not authenticated');
-
+    try {
       const { data, error } = await supabase
         .from('buckets')
         .insert([{
-          user_id: user.id,
-          name: bucketData.name,
-          color: bucketData.color,
-          order_index: bucketData.order_index,
-          is_default: bucketData.is_default,
+          ...bucketData,
+          user_id: user.id
         }])
         .select()
         .single();
 
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
-      toast({
-        title: "Success",
-        description: "Bucket created successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Update bucket mutation
-  const updateBucketMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Bucket> }) => {
-      const { error } = await supabase
+      const newBucket = {
+        ...data,
+        created_at: new Date(data.created_at),
+        updated_at: new Date(data.updated_at)
+      };
+
+      setBuckets(prev => [...prev, newBucket]);
+      toast.success('Bucket created successfully');
+    } catch (error) {
+      console.error('Error adding bucket:', error);
+      toast.error('Failed to create bucket');
+    }
+  };
+
+  const updateBucket = async (bucketId: string, updates: Partial<Bucket>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
         .from('buckets')
-        .update({
-          name: updates.name,
-          color: updates.color,
-          order_index: updates.order_index,
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
-      toast({
-        title: "Success",
-        description: "Bucket updated successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete bucket mutation
-  const deleteBucketMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // First, move all tasks from this bucket to the default bucket
-      const { data: defaultBucket } = await supabase
-        .from('buckets')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('is_default', true)
+        .update(updates)
+        .eq('id', bucketId)
+        .eq('user_id', user.id)
+        .select()
         .single();
 
-      if (defaultBucket) {
-        await supabase
-          .from('tasks')
-          .update({ bucket_id: defaultBucket.id })
-          .eq('bucket_id', id);
-      }
+      if (error) throw error;
+
+      const updatedBucket = {
+        ...data,
+        created_at: new Date(data.created_at),
+        updated_at: new Date(data.updated_at)
+      };
+
+      setBuckets(prev => prev.map(bucket => 
+        bucket.id === bucketId ? updatedBucket : bucket
+      ));
+      toast.success('Bucket updated successfully');
+    } catch (error) {
+      console.error('Error updating bucket:', error);
+      toast.error('Failed to update bucket');
+    }
+  };
+
+  const deleteBucket = async (bucketId: string) => {
+    if (!user) return;
+
+    try {
+      // First, move all tasks from this bucket to the general bucket
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .update({ bucket_id: null })
+        .eq('bucket_id', bucketId)
+        .eq('user_id', user.id);
+
+      if (tasksError) throw tasksError;
 
       // Then delete the bucket
       const { error } = await supabase
         .from('buckets')
         .delete()
-        .eq('id', id);
+        .eq('id', bucketId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buckets', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
-      toast({
-        title: "Success",
-        description: "Bucket deleted successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Main functions that handle both authenticated and non-authenticated users
-  const addBucket = (bucketData: Omit<Bucket, 'id'>) => {
-    if (user) {
-      addBucketMutation.mutate(bucketData);
-    } else {
-      addLocalBucket(bucketData);
+      setBuckets(prev => prev.filter(bucket => bucket.id !== bucketId));
+      toast.success('Bucket deleted successfully');
+    } catch (error) {
+      console.error('Error deleting bucket:', error);
+      toast.error('Failed to delete bucket');
     }
   };
 
-  const updateBucket = (id: string, updates: Partial<Bucket>) => {
-    if (user) {
-      updateBucketMutation.mutate({ id, updates });
-    } else {
-      updateLocalBucket(id, updates);
-    }
-  };
+  const reorderBuckets = async (reorderedBuckets: Bucket[]) => {
+    if (!user) return;
 
-  const deleteBucket = (id: string) => {
-    if (user) {
-      deleteBucketMutation.mutate(id);
-    } else {
-      deleteLocalBucket(id);
+    try {
+      // Update the local state immediately for better UX
+      setBuckets(reorderedBuckets);
+
+      // Update the order_index for all buckets in the database
+      const updates = reorderedBuckets.map(bucket => ({
+        id: bucket.id,
+        order_index: bucket.order_index
+      }));
+
+      for (const update of updates) {
+        if (update.id !== 'general') { // Skip the default general bucket
+          await supabase
+            .from('buckets')
+            .update({ order_index: update.order_index })
+            .eq('id', update.id)
+            .eq('user_id', user.id);
+        }
+      }
+
+      toast.success('Buckets reordered successfully');
+    } catch (error) {
+      console.error('Error reordering buckets:', error);
+      toast.error('Failed to reorder buckets');
+      // Revert the local state if the update failed
+      fetchBuckets();
     }
   };
 
   return {
     buckets,
-    isLoading: user ? isLoading : false,
     addBucket,
     updateBucket,
     deleteBucket,
+    reorderBuckets
   };
 };
