@@ -28,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 lg:flex justify-between items-center">
+        <div className="mb-8 flex-col-reverse lg:flex justify-between items-center">
           <div>
             <img 
               src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
