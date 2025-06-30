@@ -1,4 +1,3 @@
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,6 @@ import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,11 +141,11 @@ const TaskFilters = ({
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
             <Label htmlFor="sort" className="text-sm font-medium">Sort by</Label>
             <Select value={sortBy} onValueChange={onSortChange}>
-              <SelectTrigger id="sort">
+              <SelectTrigger id="sort" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +161,7 @@ const TaskFilters = ({
             <div>
               <Label className="text-sm font-medium">Sort Order</Label>
               <Select value={sortDirection} onValueChange={onSortDirectionChange}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
