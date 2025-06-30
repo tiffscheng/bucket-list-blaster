@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,11 @@ const CalendarView = () => {
     return tasksWithDueDates.filter(task => 
       task.due_date && isSameDay(task.due_date, date)
     );
+  };
+
+  const handleDayClick = (date: Date) => {
+    setCurrentDate(date);
+    setView('daily');
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -163,9 +169,10 @@ const CalendarView = () => {
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "p-3 border rounded-lg min-h-32",
+                      "p-3 border rounded-lg min-h-40 cursor-pointer hover:shadow-md transition-shadow",
                       isToday ? "bg-blue-50 border-blue-200" : "bg-white border-gray-200"
                     )}
+                    onClick={() => handleDayClick(day)}
                   >
                     <div className={cn(
                       "text-sm font-medium mb-2",
@@ -174,19 +181,21 @@ const CalendarView = () => {
                       {format(day, 'EEE d')}
                     </div>
                     <div className="space-y-1">
-                      {dayTasks.slice(0, 3).map((task) => (
+                      {dayTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="text-xs p-1 rounded text-white truncate"
-                          style={{ backgroundColor: getPriorityColor(task.priority) }}
+                          className={cn(
+                            "text-xs p-1.5 rounded text-white truncate",
+                            getPriorityColor(task.priority)
+                          )}
                           title={task.title}
                         >
                           {task.title}
                         </div>
                       ))}
-                      {dayTasks.length > 3 && (
-                        <div className="text-xs text-gray-500">
-                          +{dayTasks.length - 3} more
+                      {dayTasks.length > 4 && (
+                        <div className="text-xs text-gray-500 font-medium">
+                          +{dayTasks.length - 4} more
                         </div>
                       )}
                     </div>
@@ -254,7 +263,7 @@ const CalendarView = () => {
 
           <div className="grid grid-cols-7 gap-1 min-h-96">
             {emptyDays.map((_, index) => (
-              <div key={`empty-${index}`} className="p-2 h-24 bg-gray-50 rounded"></div>
+              <div key={`empty-${index}`} className="p-2 h-32 bg-gray-50 rounded"></div>
             ))}
             
             {monthDays.map((day) => {
@@ -265,9 +274,10 @@ const CalendarView = () => {
                 <div
                   key={day.toISOString()}
                   className={cn(
-                    "p-2 h-24 border rounded hover:bg-gray-50 transition-colors",
+                    "p-2 h-32 border rounded cursor-pointer hover:shadow-md transition-all hover:bg-gray-50",
                     isToday ? "bg-blue-50 border-blue-200" : "bg-white border-gray-200"
                   )}
+                  onClick={() => handleDayClick(day)}
                 >
                   <div className={cn(
                     "text-sm font-medium mb-1",
@@ -276,19 +286,21 @@ const CalendarView = () => {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-1">
-                    {dayTasks.slice(0, 2).map((task) => (
+                    {dayTasks.slice(0, 3).map((task) => (
                       <div
                         key={task.id}
-                        className="text-xs p-1 rounded text-white truncate"
-                        style={{ backgroundColor: getPriorityColor(task.priority) }}
+                        className={cn(
+                          "text-xs p-1 rounded text-white truncate",
+                          getPriorityColor(task.priority)
+                        )}
                         title={task.title}
                       >
                         {task.title}
                       </div>
                     ))}
-                    {dayTasks.length > 2 && (
-                      <div className="text-xs text-gray-500">
-                        +{dayTasks.length - 2} more
+                    {dayTasks.length > 3 && (
+                      <div className="text-xs text-gray-500 font-medium">
+                        +{dayTasks.length - 3} more
                       </div>
                     )}
                   </div>
