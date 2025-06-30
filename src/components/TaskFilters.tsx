@@ -35,13 +35,13 @@ const TaskFilters = ({
 }: TaskFiltersProps) => {
   const { tasks } = useTasks();
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(
-    filters.priority ? [filters.priority] : []
+    filters.priorities || []
   );
   const [selectedEfforts, setSelectedEfforts] = useState<string[]>(
-    filters.effort ? [filters.effort] : []
+    filters.efforts || []
   );
   const [selectedLabels, setSelectedLabels] = useState<string[]>(
-    filters.label ? [filters.label] : []
+    filters.labels || []
   );
   
   // Get unique labels from all tasks and update when tasks change
@@ -82,6 +82,7 @@ const TaskFilters = ({
     setSelectedPriorities(newPriorities);
     onFiltersChange({
       ...filters,
+      priorities: newPriorities.length > 0 ? newPriorities as any[] : undefined,
       priority: newPriorities.length === 1 ? newPriorities[0] as any : undefined
     });
   };
@@ -94,6 +95,7 @@ const TaskFilters = ({
     setSelectedEfforts(newEfforts);
     onFiltersChange({
       ...filters,
+      efforts: newEfforts.length > 0 ? newEfforts as any[] : undefined,
       effort: newEfforts.length === 1 ? newEfforts[0] as any : undefined
     });
   };
@@ -141,8 +143,8 @@ const TaskFilters = ({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <Label htmlFor="sort" className="text-sm font-medium">Sort by</Label>
             <Select value={sortBy} onValueChange={onSortChange}>
               <SelectTrigger id="sort">
@@ -158,8 +160,8 @@ const TaskFilters = ({
           </div>
           
           {sortBy !== 'manual' && onSortDirectionChange && (
-            <div className="flex-1">
-              <Label className="text-sm font-medium">Order</Label>
+            <div>
+              <Label className="text-sm font-medium">Sort Order</Label>
               <Select value={sortDirection} onValueChange={onSortDirectionChange}>
                 <SelectTrigger>
                   <SelectValue />

@@ -10,6 +10,7 @@ interface TaskListProps {
   tasks: Task[];
   filters: TaskFilters;
   sortBy: 'manual' | 'priority' | 'effort' | 'dueDate';
+  sortDirection?: 'asc' | 'desc';
   onToggleTask: (id: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
@@ -21,7 +22,8 @@ interface TaskListProps {
 const TaskList = ({ 
   tasks, 
   filters, 
-  sortBy, 
+  sortBy,
+  sortDirection = 'asc',
   onToggleTask, 
   onEditTask, 
   onDeleteTask,
@@ -33,9 +35,27 @@ const TaskList = ({
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
-      if (filters.priority && task.priority !== filters.priority) return false;
-      if (filters.effort && task.effort !== filters.effort) return false;
-      if (filters.label && !task.labels.includes(filters.label)) return false;
+      // Handle multiple priority filters
+      if (filters.priorities && filters.priorities.length > 0) {
+        if (!filters.priorities.includes(task.priority)) return false;
+      } else if (filters.priority && task.priority !== filters.priority) {
+        return false;
+      }
+      
+      // Handle multiple effort filters
+      if (filters.efforts && filters.efforts.length > 0) {
+        if (!filters.efforts.includes(task.effort)) return false;
+      } else if (filters.effort && task.effort !== filters.effort) {
+        return false;
+      }
+      
+      // Handle label filters
+      if (filters.labels && filters.labels.length > 0) {
+        if (!filters.labels.some(label => task.labels.includes(label))) return false;
+      } else if (filters.label && !task.labels.includes(filters.label)) {
+        return false;
+      }
+      
       return true;
     });
 
@@ -43,21 +63,28 @@ const TaskList = ({
       filtered.sort((a, b) => a.order_index - b.order_index);
     } else if (sortBy === 'priority') {
       const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-      filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      filtered.sort((a, b) => {
+        const comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        return sortDirection === 'desc' ? -comparison : comparison;
+      });
     } else if (sortBy === 'effort') {
       const effortOrder = { quick: 0, medium: 1, long: 2, massive: 3 };
-      filtered.sort((a, b) => effortOrder[a.effort] - effortOrder[b.effort]);
+      filtered.sort((a, b) => {
+        const comparison = effortOrder[a.effort] - effortOrder[b.effort];
+        return sortDirection === 'desc' ? -comparison : comparison;
+      });
     } else if (sortBy === 'dueDate') {
       filtered.sort((a, b) => {
         if (!a.due_date && !b.due_date) return 0;
-        if (!a.due_date) return 1;
-        if (!b.due_date) return -1;
-        return a.due_date.getTime() - b.due_date.getTime();
+        if (!a.due_date) return sortDirection === 'desc' ? -1 : 1;
+        if (!b.due_date) return sortDirection === 'desc' ? 1 : -1;
+        const comparison = a.due_date.getTime() - b.due_date.getTime();
+        return sortDirection === 'desc' ? -comparison : comparison;
       });
     }
 
     return filtered;
-  }, [tasks, filters, sortBy]);
+  }, [tasks, filters, sortBy, sortDirection]);
 
   const activeTasks = filteredAndSortedTasks.filter(task => !task.completed);
   const completedTasks = filteredAndSortedTasks.filter(task => task.completed);
