@@ -7,8 +7,7 @@ import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +34,6 @@ const TaskFilters = ({
   onSortDirectionChange
 }: TaskFiltersProps) => {
   const { tasks } = useTasks();
-  const [isVisible, setIsVisible] = useState(true);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(
     filters.priority ? [filters.priority] : []
   );
@@ -129,163 +127,135 @@ const TaskFilters = ({
     onFiltersChange({});
   };
 
-  const toggleSortDirection = () => {
-    if (onSortDirectionChange) {
-      onSortDirectionChange(sortDirection === 'asc' ? 'desc' : 'asc');
-    }
-  };
-
   const hasActiveFilters = selectedPriorities.length > 0 || selectedEfforts.length > 0 || selectedLabels.length > 0;
 
   return (
-    <Collapsible open={isVisible} onOpenChange={setIsVisible}>
-      <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-        <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between cursor-pointer">
-            <h3 className="font-medium text-gray-700 flex items-center gap-2">
-              Filters & Sort
-              {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
-            </h3>
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={(e) => {
-                  e.stopPropagation();
-                  clearFilters();
-                }}>
-                  Clear
-                </Button>
-              )}
-            </div>
-          </div>
-        </CollapsibleTrigger>
+    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-gray-700">Filters & Sort</h3>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear
+          </Button>
+        )}
+      </div>
 
-        <CollapsibleContent className="space-y-4">
-          <div className="flex items-center gap-2">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Label htmlFor="sort" className="text-sm font-medium">Sort by</Label>
+            <Select value={sortBy} onValueChange={onSortChange}>
+              <SelectTrigger id="sort">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manual">Manual Order</SelectItem>
+                <SelectItem value="priority">Priority</SelectItem>
+                <SelectItem value="effort">Effort Required</SelectItem>
+                <SelectItem value="dueDate">Due Date</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {sortBy !== 'manual' && onSortDirectionChange && (
             <div className="flex-1">
-              <Label htmlFor="sort" className="text-sm font-medium">Sort by</Label>
-              <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger id="sort">
+              <Label className="text-sm font-medium">Order</Label>
+              <Select value={sortDirection} onValueChange={onSortDirectionChange}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual">Manual Order</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
-                  <SelectItem value="effort">Effort Required</SelectItem>
-                  <SelectItem value="dueDate">Due Date</SelectItem>
+                  <SelectItem value="asc">Ascending</SelectItem>
+                  <SelectItem value="desc">Descending</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            {sortBy !== 'manual' && onSortDirectionChange && (
-              <div className="flex flex-col items-center">
-                <Label className="text-sm font-medium mb-2">Order</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleSortDirection}
-                  className="p-2 flex items-center gap-1"
-                  title={`Sort ${sortDirection === 'asc' ? 'Ascending' : 'Descending'}`}
-                >
-                  {sortDirection === 'asc' ? (
-                    <>
-                      <ArrowUp size={16} />
-                      <span className="text-xs">Asc</span>
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown size={16} />
-                      <span className="text-xs">Desc</span>
-                    </>
-                  )}
+          )}
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Priority</Label>
+          <div className="flex flex-wrap gap-2">
+            {priorities.map((priority) => (
+              <Badge
+                key={priority.value}
+                variant={selectedPriorities.includes(priority.value) ? "default" : "outline"}
+                className={cn(
+                  "cursor-pointer transition-all hover:scale-105",
+                  selectedPriorities.includes(priority.value) ? priority.color : "hover:bg-gray-100"
+                )}
+                onClick={() => handlePriorityChange(priority.value, !selectedPriorities.includes(priority.value))}
+              >
+                {priority.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Effort</Label>
+          <div className="flex flex-wrap gap-2">
+            {efforts.map((effort) => (
+              <Badge
+                key={effort.value}
+                variant={selectedEfforts.includes(effort.value) ? "default" : "outline"}
+                className={cn(
+                  "cursor-pointer transition-all hover:scale-105",
+                  selectedEfforts.includes(effort.value) ? effort.color : "hover:bg-gray-100"
+                )}
+                onClick={() => handleEffortChange(effort.value, !selectedEfforts.includes(effort.value))}
+              >
+                {effort.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Labels</Label>
+          {allLabels.length === 0 ? (
+            <p className="text-sm text-gray-500">No labels available</p>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {selectedLabels.length === 0 
+                    ? "Select labels" 
+                    : selectedLabels.length === 1 
+                    ? selectedLabels[0]
+                    : `${selectedLabels.length} labels selected`
+                  }
                 </Button>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium mb-2 block">Priority</Label>
-            <div className="flex flex-wrap gap-2">
-              {priorities.map((priority) => (
-                <Badge
-                  key={priority.value}
-                  variant={selectedPriorities.includes(priority.value) ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer transition-all hover:scale-105",
-                    selectedPriorities.includes(priority.value) ? priority.color : "hover:bg-gray-100"
-                  )}
-                  onClick={() => handlePriorityChange(priority.value, !selectedPriorities.includes(priority.value))}
-                >
-                  {priority.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium mb-2 block">Effort</Label>
-            <div className="flex flex-wrap gap-2">
-              {efforts.map((effort) => (
-                <Badge
-                  key={effort.value}
-                  variant={selectedEfforts.includes(effort.value) ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer transition-all hover:scale-105",
-                    selectedEfforts.includes(effort.value) ? effort.color : "hover:bg-gray-100"
-                  )}
-                  onClick={() => handleEffortChange(effort.value, !selectedEfforts.includes(effort.value))}
-                >
-                  {effort.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium mb-2 block">Labels</Label>
-            {allLabels.length === 0 ? (
-              <p className="text-sm text-gray-500">No labels available</p>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {selectedLabels.length === 0 
-                      ? "Select labels" 
-                      : selectedLabels.length === 1 
-                      ? selectedLabels[0]
-                      : `${selectedLabels.length} labels selected`
-                    }
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-full min-w-[200px]" align="start">
-                  {allLabels.map((label) => (
-                    <DropdownMenuCheckboxItem
-                      key={label}
-                      checked={selectedLabels.includes(label)}
-                      onCheckedChange={(checked) => handleLabelChange(label, checked)}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full min-w-[200px]" align="start">
+                {allLabels.map((label) => (
+                  <DropdownMenuCheckboxItem
+                    key={label}
+                    checked={selectedLabels.includes(label)}
+                    onCheckedChange={(checked) => handleLabelChange(label, checked)}
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+                {selectedLabels.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllLabels}
+                      className="w-full text-left justify-start h-8"
                     >
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                  {selectedLabels.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearAllLabels}
-                        className="w-full text-left justify-start h-8"
-                      >
-                        Clear Selections
-                      </Button>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </CollapsibleContent>
+                      Clear Selections
+                    </Button>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
-    </Collapsible>
+    </div>
   );
 };
 
