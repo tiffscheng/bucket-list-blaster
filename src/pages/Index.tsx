@@ -4,13 +4,14 @@ import TaskManager from '@/components/TaskManager';
 import CalendarView from '@/components/CalendarView';
 import RandomTaskGenerator from '@/components/RandomTaskGenerator';
 import { Button } from '@/components/ui/button';
-import { ListIcon, Calendar, Shuffle, LogOut, LogIn, LockKeyhole, X } from 'lucide-react';
+import { ListIcon, Calendar, Shuffle, LogOut, LogIn, LockKeyhole, X, Lightbulb } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'list' | 'calendar' | 'random'>('list');
   const [showBanner, setShowBanner] = useState(true);
+  const [showLightbulb, setShowLightbulb] = useState(false);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
@@ -26,35 +27,50 @@ const Index = () => {
     navigate('/auth');
   };
 
+  const handleDismissBanner = () => {
+    setShowBanner(false);
+    setShowLightbulb(true);
+  };
+
+  const handleShowBanner = () => {
+    setShowBanner(true);
+    setShowLightbulb(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {!user && showBanner && (
-        <div className="sticky top-0 z-50 bg-amber-100 border-b border-amber-200 px-4 py-3">
+        <div className="sticky top-0 z-50 bg-amber-100 border-b border-amber-200 px-4 py-3 w-full">
           <div className="container mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="text-amber-600">💡</div>
               <p className="text-amber-800 font-medium">
                 Please sign in to save your tasks and unlock the full experience.
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSignIn}
-                className="bg-white hover:bg-amber-50 border-amber-300 text-amber-700"
-              >
-                <LogIn size={16} className="mr-2" />
-                Sign In
-              </Button>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowBanner(false)}
+              onClick={handleDismissBanner}
               className="text-amber-600 hover:bg-amber-200 p-1"
             >
               <X size={16} />
             </Button>
           </div>
+        </div>
+      )}
+
+      {!user && showLightbulb && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShowBanner}
+            className="bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-200"
+            title="Show sign-in reminder"
+          >
+            <Lightbulb size={16} />
+          </Button>
         </div>
       )}
 

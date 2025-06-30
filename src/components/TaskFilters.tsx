@@ -7,7 +7,7 @@ import { TaskFilters as TTaskFilters } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, ChevronUp, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Check, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DropdownMenu,
@@ -35,7 +35,7 @@ const TaskFilters = ({
   onSortDirectionChange
 }: TaskFiltersProps) => {
   const { tasks } = useTasks();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(
     filters.priority ? [filters.priority] : []
   );
@@ -138,13 +138,13 @@ const TaskFilters = ({
   const hasActiveFilters = selectedPriorities.length > 0 || selectedEfforts.length > 0 || selectedLabels.length > 0;
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isVisible} onOpenChange={setIsVisible}>
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
         <CollapsibleTrigger asChild>
           <div className="flex items-center justify-between cursor-pointer">
             <h3 className="font-medium text-gray-700 flex items-center gap-2">
               Filters & Sort
-              {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
             </h3>
             <div className="flex items-center gap-2">
               {hasActiveFilters && (
@@ -183,10 +183,20 @@ const TaskFilters = ({
                   variant="outline"
                   size="sm"
                   onClick={toggleSortDirection}
-                  className="p-2"
+                  className="p-2 flex items-center gap-1"
                   title={`Sort ${sortDirection === 'asc' ? 'Ascending' : 'Descending'}`}
                 >
-                  {sortDirection === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+                  {sortDirection === 'asc' ? (
+                    <>
+                      <ArrowUp size={16} />
+                      <span className="text-xs">Asc</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown size={16} />
+                      <span className="text-xs">Desc</span>
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -244,7 +254,6 @@ const TaskFilters = ({
                       ? selectedLabels[0]
                       : `${selectedLabels.length} labels selected`
                     }
-                    <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-full min-w-[200px]" align="start">
