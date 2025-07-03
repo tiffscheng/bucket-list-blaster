@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useBuckets } from '@/hooks/useBuckets';
 import { Task } from '@/types/Task';
@@ -122,7 +121,10 @@ const BucketView = ({
     if (!draggedTask) return;
 
     const bucket = buckets.find(b => b.id === bucketId);
-    const newBucketId = bucket?.is_default ? undefined : bucketId;
+    
+    // If dropping on the General bucket (is_default), set bucket_id to null
+    // Otherwise, set bucket_id to the target bucket's id
+    const newBucketId = bucket?.is_default ? null : bucketId;
 
     const updatedTask = { ...draggedTask, bucket_id: newBucketId };
     onReorderTasks(tasks.map(task => task.id === updatedTask.id ? updatedTask : task));
