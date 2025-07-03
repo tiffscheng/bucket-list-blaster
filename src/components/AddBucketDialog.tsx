@@ -1,8 +1,15 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 
@@ -11,66 +18,70 @@ interface AddBucketDialogProps {
 }
 
 const AddBucketDialog = ({ onAddBucket }: AddBucketDialogProps) => {
-  const [showDialog, setShowDialog] = useState(false);
-  const [bucketName, setBucketName] = useState('');
-  const [bucketColor, setBucketColor] = useState('#3b82f6');
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('#3b82f6');
 
-  const handleAddBucket = () => {
-    if (bucketName.trim()) {
-      onAddBucket(bucketName.trim(), bucketColor);
-      setBucketName('');
-      setBucketColor('#3b82f6');
-      setShowDialog(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onAddBucket(name.trim(), color);
+      setName('');
+      setColor('#3b82f6');
+      setOpen(false);
     }
   };
 
   return (
-    <>
-      <Button onClick={() => setShowDialog(true)}>
-        <Plus size={16} className="mr-2" />
-        Add Bucket
-      </Button>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Bucket</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="bucket-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Bucket Name
-              </label>
-              <Input
-                id="bucket-name"
-                type="text"
-                placeholder="Enter bucket name"
-                value={bucketName}
-                onChange={(e) => setBucketName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddBucket()}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bucket Color
-              </label>
-              <ColorPicker
-                selectedColor={bucketColor}
-                onColorSelect={setBucketColor}
-              />
-            </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+          <Plus size={16} className="mr-2" />
+          Add Bucket
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Bucket</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="bucket-name">Bucket Name</Label>
+            <Input
+              id="bucket-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter bucket name"
+              className="mt-1"
+            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+          <div>
+            <Label>Bucket Color</Label>
+            <ColorPicker
+              selectedColor={color}
+              onColorSelect={setColor}
+            />
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="flex-1"
+            >
               Cancel
             </Button>
-            <Button onClick={handleAddBucket} disabled={!bucketName.trim()}>
-              Add Bucket
+            <Button
+              type="submit"
+              disabled={!name.trim()}
+              className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+            >
+              Create Bucket
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

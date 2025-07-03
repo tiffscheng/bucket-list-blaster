@@ -89,18 +89,9 @@ const TaskList = ({
   const activeTasks = filteredAndSortedTasks.filter(task => !task.completed);
   const completedTasks = filteredAndSortedTasks.filter(task => task.completed);
 
-  if (filteredAndSortedTasks.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        <p className="text-lg">No tasks found</p>
-        <p className="text-sm mt-2">Try adjusting your filters or add a new task</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* View Mode Toggle */}
+      {/* View Mode Toggle - Always visible */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-700">
           Tasks ({filteredAndSortedTasks.length})
@@ -125,51 +116,61 @@ const TaskList = ({
         </div>
       </div>
 
-      {/* Render based on view mode */}
-      {viewMode === 'buckets' ? (
-        <BucketView
-          tasks={filteredAndSortedTasks}
-          onToggleTask={onToggleTask}
-          onEditTask={onEditTask}
-          onDeleteTask={onDeleteTask}
-          onDuplicateTask={onDuplicateTask}
-          onReorderTasks={onReorderTasks}
-          onToggleSubtask={onToggleSubtask}
-        />
+      {/* Show no tasks message when filtered results are empty */}
+      {filteredAndSortedTasks.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-lg">No tasks found</p>
+          <p className="text-sm mt-2">Try adjusting your filters or add a new task</p>
+        </div>
       ) : (
         <>
-          {activeTasks.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                Active Tasks ({activeTasks.length})
-              </h3>
-              <TaskListView
-                tasks={activeTasks}
-                onToggleTask={onToggleTask}
-                onEditTask={onEditTask}
-                onDeleteTask={onDeleteTask}
-                onDuplicateTask={onDuplicateTask}
-                onReorderTasks={onReorderTasks}
-                onToggleSubtask={onToggleSubtask}
-              />
-            </div>
-          )}
+          {/* Render based on view mode */}
+          {viewMode === 'buckets' ? (
+            <BucketView
+              tasks={filteredAndSortedTasks}
+              onToggleTask={onToggleTask}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              onDuplicateTask={onDuplicateTask}
+              onReorderTasks={onReorderTasks}
+              onToggleSubtask={onToggleSubtask}
+            />
+          ) : (
+            <>
+              {activeTasks.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                    Active Tasks ({activeTasks.length})
+                  </h3>
+                  <TaskListView
+                    tasks={activeTasks}
+                    onToggleTask={onToggleTask}
+                    onEditTask={onEditTask}
+                    onDeleteTask={onDeleteTask}
+                    onDuplicateTask={onDuplicateTask}
+                    onReorderTasks={onReorderTasks}
+                    onToggleSubtask={onToggleSubtask}
+                  />
+                </div>
+              )}
 
-          {completedTasks.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                Completed Tasks ({completedTasks.length})
-              </h3>
-              <TaskListView
-                tasks={completedTasks}
-                onToggleTask={onToggleTask}
-                onEditTask={onEditTask}
-                onDeleteTask={onDeleteTask}
-                onDuplicateTask={onDuplicateTask}
-                onReorderTasks={onReorderTasks}
-                onToggleSubtask={onToggleSubtask}
-              />
-            </div>
+              {completedTasks.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                    Completed Tasks ({completedTasks.length})
+                  </h3>
+                  <TaskListView
+                    tasks={completedTasks}
+                    onToggleTask={onToggleTask}
+                    onEditTask={onEditTask}
+                    onDeleteTask={onDeleteTask}
+                    onDuplicateTask={onDuplicateTask}
+                    onReorderTasks={onReorderTasks}
+                    onToggleSubtask={onToggleSubtask}
+                  />
+                </div>
+              )}
+            </>
           )}
         </>
       )}
