@@ -35,7 +35,7 @@ const AddBucketDialog = ({ onAddBucket }: AddBucketDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+        <Button className="bg-blue-700 hover:bg-emerald-800 text-white">
           <Plus size={16} className="mr-2" />
           Add Bucket
         </Button>
