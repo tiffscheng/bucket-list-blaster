@@ -13,7 +13,7 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onGetStarted, onSignIn }: HeroSectionProps) => {
   return (
-    <section className="relative py-20 lg:py-32">
+    <section className="relative py-20 lg:py-40">
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
