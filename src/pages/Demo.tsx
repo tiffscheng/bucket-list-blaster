@@ -1,32 +1,54 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ListIcon, Calendar, Shuffle, Lock, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ListIcon, Calendar, Shuffle, Lock, ArrowRight, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Demo page component - Shows a locked version of the TaskFlow app
+ * Displays sample tasks and locked functionality to encourage sign-up
+ * 
+ * Features:
+ * - View switcher for different app views (list, calendar, random)
+ * - Sample tasks displayed in blurred/locked state
+ * - Warning banner to encourage authentication
+ * - Locked interactive elements (buttons disabled with lock icons)
+ * - Sign-up overlay prompting users to create account
+ */
 const Demo = () => {
   const [currentView, setCurrentView] = useState<'list' | 'calendar' | 'random'>('list');
   const navigate = useNavigate();
 
+  /**
+   * Navigate to authentication page for user sign-up
+   */
   const handleSignUp = () => {
     navigate('/auth');
   };
 
+  /**
+   * Navigate back to homepage
+   */
   const handleBackToHome = () => {
     navigate('/');
   };
 
+  // Sample tasks for demonstration purposes
   const mockTasks = [
-    { id: 1, title: "Complete project proposal", bucket: "Work", priority: "High" },
-    { id: 2, title: "Review quarterly reports", bucket: "Work", priority: "Medium" },
-    { id: 3, title: "Plan weekend trip", bucket: "Personal", priority: "Low" },
-    { id: 4, title: "Buy groceries", bucket: "Personal", priority: "Medium" },
-    { id: 5, title: "Schedule team meeting", bucket: "Work", priority: "High" },
+    { id: 1, title: "Complete project proposal", bucket: "Work", priority: "High", completed: false },
+    { id: 2, title: "Review quarterly reports", bucket: "Work", priority: "Medium", completed: false },
+    { id: 3, title: "Plan weekend trip", bucket: "Personal", priority: "Low", completed: true },
+    { id: 4, title: "Buy groceries", bucket: "Personal", priority: "Medium", completed: false },
+    { id: 5, title: "Schedule team meeting", bucket: "Work", priority: "High", completed: false },
   ];
+
+  // Filter to show only incomplete tasks for the demo
+  const activeTasks = mockTasks.filter(task => !task.completed);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
+      {/* Header with demo badge */}
       <div className="bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -53,12 +75,20 @@ const Demo = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Warning banner for demo mode */}
+        <Alert className="mb-6 border-amber-200 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <strong>Demo Mode:</strong> Sign up or sign in to save tasks and unlock the full TaskFlow experience.
+          </AlertDescription>
+        </Alert>
+
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">TaskFlow Demo</h1>
           <p className="text-gray-600">Experience the power of TaskFlow task management</p>
         </div>
 
-        {/* View Switcher */}
+        {/* View switcher with locked random task generator */}
         <div className="flex flex-wrap gap-4 mb-8">
           <Button
             onClick={() => setCurrentView('list')}
@@ -80,20 +110,27 @@ const Demo = () => {
             onClick={() => setCurrentView('random')}
             variant={currentView === 'random' ? 'default' : 'outline'}
             className="flex items-center gap-2"
+            disabled
           >
-            <Shuffle size={18} />
+            <Lock size={16} />
             Random Task
           </Button>
         </div>
 
-        {/* Demo Content with Overlay */}
+        {/* Demo content with overlay */}
         <div className="relative bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Blurred Content */}
+          {/* Blurred content showing sample tasks */}
           <div className="filter blur-sm opacity-50 p-6">
             {currentView === 'list' && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-4">Your Tasks</h3>
-                {mockTasks.map((task) => (
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Your Tasks ({activeTasks.length})</h3>
+                  <Button disabled className="opacity-50">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Add Task
+                  </Button>
+                </div>
+                {activeTasks.map((task) => (
                   <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium">{task.title}</h4>
@@ -135,18 +172,19 @@ const Demo = () => {
               <div className="p-8 text-center">
                 <h3 className="text-lg font-semibold mb-4">Random Task Generator</h3>
                 <div className="bg-blue-50 rounded-lg p-6 mb-6">
-                  <Shuffle className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                  <h4 className="font-medium mb-2">Your Next Task:</h4>
-                  <p className="text-lg">{mockTasks[2].title}</p>
+                  <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h4 className="font-medium mb-2 text-gray-600">Feature Locked</h4>
+                  <p className="text-lg text-gray-500">Sign up to use the Random Task Generator</p>
                 </div>
                 <Button disabled className="opacity-50">
-                  Generate Another Task
+                  <Lock className="mr-2 h-4 w-4" />
+                  Generate Random Task
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Lock Overlay */}
+          {/* Lock overlay with sign-up prompt */}
           <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
             <div className="text-center max-w-md mx-auto p-8">
               <div className="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
