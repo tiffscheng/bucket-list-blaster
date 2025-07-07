@@ -35,7 +35,7 @@ const DemoSection = ({ onTryDemo }: DemoSectionProps) => {
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-b from-blue-50 to-white rounded-xl p-8 min-h-96 flex items-end justify-center">
             <div 
-              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-2 max-w-2xl"
+              className="bg-white rounded-t-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-2 max-w-2xl"
               onClick={onTryDemo}
             >
               <div className="relative overflow-hidden">
