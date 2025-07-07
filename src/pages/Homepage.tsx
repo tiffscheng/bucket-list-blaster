@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Calendar, Target, Users, Star, ArrowRight } from 'lucide-react';
+import { CheckCircle, Calendar, Users, Star, ArrowRight, Shuffle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Homepage = () => {
@@ -26,7 +26,7 @@ const Homepage = () => {
       description: "View your tasks in a beautiful calendar format with due dates and scheduling."
     },
     {
-      icon: Target,
+      icon: Shuffle,
       title: "Random Task Generator",
       description: "Break through decision paralysis with our intelligent random task picker."
     },
@@ -58,19 +58,36 @@ const Homepage = () => {
     }
   ];
 
+  const screenshots = [
+    {
+      title: "Task Management",
+      description: "Organize your tasks with smart buckets and priorities",
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop"
+    },
+    {
+      title: "Calendar View", 
+      description: "See your tasks in a beautiful calendar layout",
+      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=600&fit=crop"
+    },
+    {
+      title: "Random Generator",
+      description: "Let AI pick your next task when you can't decide",
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=600&fit=crop"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div>
               <img 
                 src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
                 alt="TaskFlow" 
                 className="h-8"
               />
-              <span className="text-xl font-semibold text-gray-900">TaskFlow</span>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" onClick={handleSignIn}>
@@ -144,8 +161,42 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Action Screenshots Section */}
       <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              See TaskFlow in action
+            </h2>
+            <p className="text-xl text-gray-600">
+              Get a glimpse of how TaskFlow makes task management effortless
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {screenshots.map((screenshot, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                <img 
+                  src={screenshot.image} 
+                  alt={screenshot.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {screenshot.title}
+                  </h3>
+                  <p className="text-gray-600">
+                    {screenshot.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -202,16 +253,11 @@ const Homepage = () => {
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <img 
-                src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
-                alt="TaskFlow" 
-                className="h-8"
-              />
+            <div className="mb-4 md:mb-0">
               <span className="text-xl font-semibold">TaskFlow</span>
             </div>
             <p className="text-gray-400">
-              © 2024 TaskFlow. All rights reserved.
+              © 2025 TaskFlow. All rights reserved.
             </p>
           </div>
         </div>
