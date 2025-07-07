@@ -11,10 +11,10 @@ import { useNavigate } from 'react-router-dom';
  * 
  * Features:
  * - View switcher for different app views (list, calendar, random)
- * - Sample tasks displayed in blurred/locked state
+ * - Sample tasks displayed in unlocked state
  * - Warning banner to encourage authentication
  * - Locked interactive elements (buttons disabled with lock icons)
- * - Sign-up overlay prompting users to create account
+ * - Sign-up prompts for locked features
  */
 const Demo = () => {
   const [currentView, setCurrentView] = useState<'list' | 'calendar' | 'random'>('list');
@@ -117,10 +117,9 @@ const Demo = () => {
           </Button>
         </div>
 
-        {/* Demo content with overlay */}
-        <div className="relative bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Blurred content showing sample tasks */}
-          <div className="filter blur-sm opacity-50 p-6">
+        {/* Demo content without overlay */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-6">
             {currentView === 'list' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
@@ -174,44 +173,18 @@ const Demo = () => {
                 <div className="bg-blue-50 rounded-lg p-6 mb-6">
                   <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h4 className="font-medium mb-2 text-gray-600">Feature Locked</h4>
-                  <p className="text-lg text-gray-500">Sign up to use the Random Task Generator</p>
+                  <p className="text-lg text-gray-500 mb-4">Sign up to use the Random Task Generator</p>
+                  <Button onClick={handleSignUp} className="w-full">
+                    Sign Up Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </div>
                 <Button disabled className="opacity-50">
-                  <Lock className="mr-2 h-4 w-4" />
+                  <Shuffle className="mr-2 h-4 w-4" />
                   Generate Random Task
                 </Button>
               </div>
             )}
-          </div>
-
-          {/* Lock overlay with sign-up prompt */}
-          <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
-            <div className="text-center max-w-md mx-auto p-8">
-              <div className="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <Lock className="h-10 w-10 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Please sign in for the full experience
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Create your free account to unlock all TaskFlow features and start organizing your tasks like a pro.
-              </p>
-              <div className="space-y-3">
-                <Button onClick={handleSignUp} size="lg" className="w-full">
-                  Sign Up Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <p className="text-sm text-gray-500">
-                  Already have an account?{' '}
-                  <button 
-                    onClick={handleSignUp}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Sign in here
-                  </button>
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

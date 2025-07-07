@@ -31,32 +31,25 @@ const DemoSection = ({ onTryDemo }: DemoSectionProps) => {
           </Button>
         </div>
         
-        {/* Single large screenshot */}
+        {/* Light background container with centered screenshot */}
         <div className="max-w-4xl mx-auto">
-          <div 
-            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-2"
-            onClick={onTryDemo}
-          >
-            <div className="relative overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=800&fit=crop" 
-                alt="TaskFlow Task Management Interface"
-                className="w-full h-96 object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <div className="bg-white/90 rounded-full p-4">
-                  <Play className="h-8 w-8 text-blue-600" />
+          <div className="bg-gradient-to-b from-blue-50 to-white rounded-xl p-8 min-h-96 flex items-end justify-center">
+            <div 
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-2 max-w-2xl"
+              onClick={onTryDemo}
+            >
+              <div className="relative overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=800&fit=crop" 
+                  alt="TaskFlow Task Management Interface"
+                  className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <div className="bg-white/90 rounded-full p-4">
+                    <Play className="h-8 w-8 text-blue-600" />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
-                Complete Task Management Solution
-              </h3>
-              <p className="text-gray-600 text-lg">
-                Experience TaskFlow's intuitive interface with smart task organization, 
-                calendar views, and productivity-boosting features all in one place.
-              </p>
             </div>
           </div>
         </div>
