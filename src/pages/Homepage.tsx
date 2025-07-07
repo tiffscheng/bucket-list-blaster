@@ -1,6 +1,5 @@
-
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Calendar, Users, Star, ArrowRight, Shuffle } from 'lucide-react';
+import { CheckCircle, Calendar, Users, Star, ArrowRight, Shuffle, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Homepage = () => {
@@ -12,6 +11,11 @@ const Homepage = () => {
 
   const handleSignIn = () => {
     navigate('/auth');
+  };
+
+  const handleTryDemo = () => {
+    // Navigate to a demo route that shows the locked interface
+    navigate('/demo');
   };
 
   const features = [
@@ -168,21 +172,40 @@ const Homepage = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               See TaskFlow in action
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 mb-8">
               Get a glimpse of how TaskFlow makes task management effortless
             </p>
+            <Button 
+              size="lg" 
+              onClick={handleTryDemo}
+              className="text-lg px-8 py-3 bg-blue-600 hover:bg-blue-700"
+            >
+              <Play className="mr-2 h-5 w-5" />
+              Try Interactive Demo
+            </Button>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             {screenshots.map((screenshot, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                <img 
-                  src={screenshot.image} 
-                  alt={screenshot.title}
-                  className="w-full h-48 object-cover"
-                />
+              <div 
+                key={index} 
+                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-1"
+                onClick={handleTryDemo}
+              >
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={screenshot.image} 
+                    alt={screenshot.title}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="bg-white/90 rounded-full p-3">
+                      <Play className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {screenshot.title}
                   </h3>
                   <p className="text-gray-600">

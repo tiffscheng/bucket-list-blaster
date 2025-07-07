@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Homepage from "./pages/Homepage";
+import Demo from "./pages/Demo";
 import Auth from "./components/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +31,7 @@ const AppContent = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={user ? <Index /> : <Homepage />} />
+        <Route path="/demo" element={<Demo />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
