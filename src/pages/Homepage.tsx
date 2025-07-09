@@ -54,7 +54,7 @@ const Homepage = () => {
               <img 
                 src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
                 alt="TaskFlow" 
-                className="h-8"
+                className="h-6"
               />
             </div>
             <div className="flex items-center space-x-4">
