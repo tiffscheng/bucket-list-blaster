@@ -32,8 +32,8 @@ const DemoSection = ({ onTryDemo }: DemoSectionProps) => {
         </div>
         
         {/* Light background container with centered screenshot */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-b from-blue-50 to-white rounded-xl min-h-96 flex items-end justify-center">
+        <div className="max-w-4xl mx-auto rounded-xl shadow-xl">
+          <div className="bg-blue-100 rounded-xl min-h-96 flex items-end justify-center">
             <div 
               className="bg-white rounded-t-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-2 max-w-3xl"
               onClick={onTryDemo}
