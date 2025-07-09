@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, Menu } from 'lucide-react';
 import TaskList from './TaskList';
 import TaskForm from './TaskForm';
 import TaskFilters from './TaskFilters';
@@ -23,6 +23,7 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
   const [filters, setFilters] = useState<TaskFiltersType>({});
   const [sortBy, setSortBy] = useState<'manual' | 'priority' | 'effort' | 'dueDate'>('manual');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showFilters, setShowFilters] = useState(false);
 
   const {
     tasks,
@@ -141,12 +142,37 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row h-full">
+      {/* Mobile Header with Add Task and Filter Toggle */}
+      <div className="lg:hidden p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2 mb-4">
+          <Button 
+            onClick={() => !isDemo && setShowTaskForm(true)} 
+            className="bg-gradient-to-r from-blue-600 to-purple-600 flex-1 flex items-center justify-center gap-2"
+            disabled={isDemo}
+          >
+            {isDemo ? <Lock size={16} /> : <Plus size={16} />}
+            Add Task
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Menu size={16} />
+          </Button>
+        </div>
+      </div>
+
       {/* Left Sidebar - Filters & Sort */}
-      <div className="w-80 border-r border-gray-200 p-6">
+      <div className={`
+        ${showFilters ? 'block' : 'hidden'} lg:block
+        w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-gray-200 p-4 lg:p-6
+      `}>
+        {/* Desktop Add Task Button */}
         <Button 
           onClick={() => !isDemo && setShowTaskForm(true)} 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 w-full flex items-center justify-center gap-2 mb-6"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 w-full flex items-center justify-center gap-2 mb-6 hidden lg:flex"
           disabled={isDemo}
         >
           {isDemo ? <Lock size={16} /> : <Plus size={16} />}
@@ -164,7 +190,7 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
       </div>
 
       {/* Right Main Content - Task List */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 lg:p-6 min-w-0">
         <TaskList
           tasks={displayTasks}
           filters={filters}

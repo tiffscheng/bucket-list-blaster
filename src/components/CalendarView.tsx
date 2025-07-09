@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Task } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
@@ -31,6 +30,7 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const {
     tasks,
@@ -161,9 +161,9 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   };
 
   return (
-    <div className="flex h-full">
-      {/* Left Calendar Section */}
-      <div className="flex-1 p-6">
+    <div className="flex flex-col lg:flex-row h-full">
+      {/* Main Calendar Section */}
+      <div className="flex-1 p-4 lg:p-6 min-w-0">
         <CalendarNavigation
           selectedDate={selectedDate}
           viewMode={viewMode}
@@ -171,15 +171,25 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
           rangeEnd={rangeEnd}
           onNavigate={handleNavigate}
           onViewModeChange={setViewMode}
+          showSidebar={showSidebar}
+          onToggleSidebar={() => setShowSidebar(!showSidebar)}
         />
         
-        {renderCalendarView()}
+        <div className="overflow-x-auto">
+          {renderCalendarView()}
+        </div>
       </div>
 
-      <CalendarSidebar
-        recurringTasks={recurringTasks}
-        upcomingTasks={upcomingTasks}
-      />
+      {/* Sidebar - Hidden on mobile by default */}
+      <div className={`
+        ${showSidebar ? 'block' : 'hidden'} lg:block
+        w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200
+      `}>
+        <CalendarSidebar
+          recurringTasks={recurringTasks}
+          upcomingTasks={upcomingTasks}
+        />
+      </div>
 
       {showTaskForm && !isDemo && (
         <TaskForm

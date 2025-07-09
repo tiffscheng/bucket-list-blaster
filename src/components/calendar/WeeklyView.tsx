@@ -16,9 +16,9 @@ const WeeklyView = ({ selectedDate, rangeStart, rangeEnd, tasks, onDayClick }: W
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 lg:gap-2 min-w-full overflow-x-auto">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center font-semibold p-2 bg-gray-100 rounded">
+          <div key={day} className="text-center font-semibold p-1 lg:p-2 bg-gray-100 rounded text-xs lg:text-sm">
             {day}
           </div>
         ))}
@@ -27,14 +27,14 @@ const WeeklyView = ({ selectedDate, rangeStart, rangeEnd, tasks, onDayClick }: W
           return (
             <div 
               key={day.toString()} 
-              className={`border rounded-lg p-3 min-h-32 cursor-pointer hover:bg-gray-50 ${
+              className={`border rounded-lg p-1 lg:p-3 min-h-20 lg:min-h-32 cursor-pointer hover:bg-gray-50 ${
                 isSameDay(day, selectedDate) ? 'bg-blue-50 border-blue-300' : 'bg-white'
               }`}
               onClick={() => onDayClick(day)}
             >
-              <div className="font-semibold text-sm mb-2">{format(day, 'd')}</div>
+              <div className="font-semibold text-xs lg:text-sm mb-1 lg:mb-2">{format(day, 'd')}</div>
               <div className="space-y-1">
-                {dayTasks.slice(0, 3).map((task) => (
+                {dayTasks.slice(0, 2).map((task) => (
                   <div 
                     key={task.id} 
                     className={`text-xs p-1 rounded truncate ${getPriorityColor(task.priority)}`}
@@ -42,8 +42,8 @@ const WeeklyView = ({ selectedDate, rangeStart, rangeEnd, tasks, onDayClick }: W
                     {task.title}
                   </div>
                 ))}
-                {dayTasks.length > 3 && (
-                  <div className="text-xs text-gray-500">+{dayTasks.length - 3} more</div>
+                {dayTasks.length > 2 && (
+                  <div className="text-xs text-gray-500">+{dayTasks.length - 2}</div>
                 )}
               </div>
             </div>

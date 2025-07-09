@@ -10,7 +10,7 @@ interface CalendarSidebarProps {
 
 const CalendarSidebar = ({ recurringTasks, upcomingTasks }: CalendarSidebarProps) => {
   return (
-    <div className="w-80 border-l border-gray-200 p-6 space-y-6">
+    <div className="p-4 lg:p-6 space-y-6">
       {/* Recurring Tasks */}
       <div>
         <h4 className="text-lg font-semibold mb-3">Recurring Tasks</h4>
@@ -20,9 +20,9 @@ const CalendarSidebar = ({ recurringTasks, upcomingTasks }: CalendarSidebarProps
           ) : (
             recurringTasks.map((task) => (
               <div key={task.id} className="p-3 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{task.title}</span>
-                  <Badge variant="secondary" className="text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="font-medium text-sm truncate">{task.title}</span>
+                  <Badge variant="secondary" className="text-xs w-fit">
                     {task.recurrence_interval}
                   </Badge>
                 </div>
@@ -41,8 +41,8 @@ const CalendarSidebar = ({ recurringTasks, upcomingTasks }: CalendarSidebarProps
           ) : (
             upcomingTasks.map((task) => (
               <div key={task.id} className="p-3 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{task.title}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="font-medium text-sm truncate">{task.title}</span>
                   <span className="text-xs text-gray-500">
                     {task.due_date && format(task.due_date, 'MMM d')}
                   </span>

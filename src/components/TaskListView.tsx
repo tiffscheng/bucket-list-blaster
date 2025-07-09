@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Task } from '@/types/Task';
 import TaskItem from './TaskItem';
@@ -95,6 +94,7 @@ const TaskListView = ({
             onDelete={onDeleteTask}
             onDuplicate={onDuplicateTask}
             onToggleSubtask={onToggleSubtask}
+            useDropdownActions={true}
           />
         </div>
       ))}
