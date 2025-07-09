@@ -80,11 +80,9 @@ const Homepage = () => {
       <footer className="bg-gray-900 text-white py-2">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0">
-              <span>Organize your life, achieve your goals</span>
-            </div>
+            <p className="text-gray-400">© 2025 TaskFlow</p>
             <p className="text-gray-400">
-              © 2025 TaskFlow. All rights reserved.
+               All rights reserved
             </p>
           </div>
         </div>
