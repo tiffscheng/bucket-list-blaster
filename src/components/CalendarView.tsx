@@ -1,9 +1,10 @@
+
 import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Lock } from 'lucide-react';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { Plus, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
 import { Task } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import TaskForm from './TaskForm';
@@ -21,6 +22,7 @@ interface CalendarViewProps {
 
 const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -78,31 +80,42 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const displayTasks = isDemo ? demoTasks : tasks;
 
   const tasksWithDueDates = displayTasks.filter(task => task.due_date);
+  const recurringTasks = displayTasks.filter(task => task.is_recurring);
   
-  const tasksForSelectedDate = tasksWithDueDates.filter(task => 
-    task.due_date && isSameDay(task.due_date, selectedDate)
-  );
-
-  const getTasksForDate = (date: Date) => {
-    return tasksWithDueDates.filter(task => 
-      task.due_date && isSameDay(task.due_date, date)
-    );
+  const getDateRange = () => {
+    switch (viewMode) {
+      case 'daily':
+        return { start: selectedDate, end: selectedDate };
+      case 'weekly':
+        return { start: startOfWeek(selectedDate), end: endOfWeek(selectedDate) };
+      case 'monthly':
+        return { start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) };
+    }
   };
 
-  const currentMonth = startOfMonth(selectedDate);
-  const monthEnd = endOfMonth(selectedDate);
-  const monthDays = eachDayOfInterval({ start: currentMonth, end: monthEnd });
-
-  const dayProps = monthDays.reduce((acc, day) => {
-    const dayTasks = getTasksForDate(day);
-    if (dayTasks.length > 0) {
-      acc[format(day, 'yyyy-MM-dd')] = {
-        hasTask: true,
-        taskCount: dayTasks.length
-      };
+  const navigateDate = (direction: 'prev' | 'next') => {
+    switch (viewMode) {
+      case 'daily':
+        setSelectedDate(direction === 'next' ? addDays(selectedDate, 1) : subDays(selectedDate, 1));
+        break;
+      case 'weekly':
+        setSelectedDate(direction === 'next' ? addWeeks(selectedDate, 1) : subWeeks(selectedDate, 1));
+        break;
+      case 'monthly':
+        setSelectedDate(direction === 'next' ? addMonths(selectedDate, 1) : subMonths(selectedDate, 1));
+        break;
     }
-    return acc;
-  }, {} as Record<string, { hasTask: boolean; taskCount: number }>);
+  };
+
+  const { start: rangeStart, end: rangeEnd } = getDateRange();
+  
+  const tasksInRange = tasksWithDueDates.filter(task => 
+    task.due_date && isWithinInterval(task.due_date, { start: rangeStart, end: rangeEnd })
+  );
+
+  const upcomingTasks = tasksWithDueDates.filter(task => 
+    task.due_date && task.due_date > rangeEnd
+  ).slice(0, 5);
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     if (isDemo) return; // Prevent task creation in demo mode
@@ -162,68 +175,79 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Calendar Section */}
-        <div className="lg:w-1/2">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Calendar</h2>
-            <Button 
-              onClick={() => !isDemo && setShowTaskForm(true)}
-              size="sm"
-              disabled={isDemo}
-            >
-              {isDemo ? <Lock size={16} className="mr-2" /> : <Plus size={16} className="mr-2" />}
-              Add Task
-            </Button>
+    <div className="flex h-full">
+      {/* Left Calendar Section */}
+      <div className="flex-1 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold">Calendar</h2>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'daily' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('daily')}
+              >
+                Daily
+              </Button>
+              <Button
+                variant={viewMode === 'weekly' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('weekly')}
+              >
+                Weekly
+              </Button>
+              <Button
+                variant={viewMode === 'monthly' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('monthly')}
+              >
+                Monthly
+              </Button>
+            </div>
           </div>
-          
-          <div className="border rounded-lg p-4">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="w-full"
-              modifiers={{
-                hasTask: (date) => {
-                  const dateKey = format(date, 'yyyy-MM-dd');
-                  return dayProps[dateKey]?.hasTask || false;
-                }
-              }}
-              modifiersStyles={{
-                hasTask: {
-                  backgroundColor: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
-                  borderRadius: '50%'
-                }
-              }}
-            />
-          </div>
+          <Button 
+            onClick={() => !isDemo && setShowTaskForm(true)}
+            disabled={isDemo}
+          >
+            {isDemo ? <Lock size={16} className="mr-2" /> : <Plus size={16} className="mr-2" />}
+            Add Task
+          </Button>
         </div>
 
-        {/* Tasks for Selected Date */}
-        <div className="lg:w-1/2">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">
-              Tasks for {format(selectedDate, 'MMMM d, yyyy')}
-            </h3>
-            {tasksForSelectedDate.length > 0 ? (
-              <Badge variant="secondary" className="mb-4">
-                {tasksForSelectedDate.length} task{tasksForSelectedDate.length !== 1 ? 's' : ''}
-              </Badge>
-            ) : null}
-          </div>
+        {/* Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
+            <ChevronLeft size={16} />
+          </Button>
+          <h3 className="text-lg font-semibold">
+            {viewMode === 'daily' && format(selectedDate, 'MMMM d, yyyy')}
+            {viewMode === 'weekly' && `${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`}
+            {viewMode === 'monthly' && format(selectedDate, 'MMMM yyyy')}
+          </h3>
+          <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
+            <ChevronRight size={16} />
+          </Button>
+        </div>
+        
+        <div className="border rounded-lg p-4">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => date && setSelectedDate(date)}
+            className="w-full"
+          />
+        </div>
 
+        {/* Tasks in Current View */}
+        <div className="mt-6">
+          <h4 className="text-lg font-semibold mb-3">
+            Tasks in {viewMode} view ({tasksInRange.length})
+          </h4>
           <div className="space-y-3">
-            {tasksForSelectedDate.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No tasks scheduled for this date</p>
-                <p className="text-sm mt-2">
-                  {isDemo ? 'Sign up to add tasks' : 'Click "Add Task" to create one'}
-                </p>
-              </div>
+            {tasksInRange.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No tasks in this period</p>
             ) : (
-              tasksForSelectedDate.map((task) => (
+              tasksInRange.map((task) => (
                 <TaskItem
                   key={task.id}
                   task={task}
@@ -234,6 +258,51 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
                   onToggleSubtask={handleToggleSubtask}
                   hideActions={isDemo}
                 />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Sidebar */}
+      <div className="w-80 border-l border-gray-200 p-6 space-y-6">
+        {/* Recurring Tasks */}
+        <div>
+          <h4 className="text-lg font-semibold mb-3">Recurring Tasks</h4>
+          <div className="space-y-2">
+            {recurringTasks.length === 0 ? (
+              <p className="text-gray-500 text-sm">No recurring tasks</p>
+            ) : (
+              recurringTasks.map((task) => (
+                <div key={task.id} className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{task.title}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {task.recurrence_interval}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Upcoming Tasks */}
+        <div>
+          <h4 className="text-lg font-semibold mb-3">Upcoming Tasks</h4>
+          <div className="space-y-2">
+            {upcomingTasks.length === 0 ? (
+              <p className="text-gray-500 text-sm">No upcoming tasks</p>
+            ) : (
+              upcomingTasks.map((task) => (
+                <div key={task.id} className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{task.title}</span>
+                    <span className="text-xs text-gray-500">
+                      {task.due_date && format(task.due_date, 'MMM d')}
+                    </span>
+                  </div>
+                </div>
               ))
             )}
           </div>

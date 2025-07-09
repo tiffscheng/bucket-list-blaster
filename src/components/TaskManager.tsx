@@ -142,43 +142,47 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
+    <div className="flex h-full">
+      {/* Left Sidebar - Filters & Sort */}
+      <div className="w-80 border-r border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-600 mt-1">Manage your tasks and stay organized</p>
+          <Button 
+            onClick={() => !isDemo && setShowTaskForm(true)} 
+            className="flex items-center gap-2"
+            disabled={isDemo}
+          >
+            {isDemo ? <Lock size={16} /> : <Plus size={16} />}
+            Add Task
+          </Button>
         </div>
-        <Button 
-          onClick={() => !isDemo && setShowTaskForm(true)} 
-          className="flex items-center gap-2"
-          disabled={isDemo}
-        >
-          {isDemo ? <Lock size={16} /> : <Plus size={16} />}
-          Add Task
-        </Button>
+
+        <TaskFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          sortDirection={sortDirection}
+          onSortDirectionChange={setSortDirection}
+          tasks={displayTasks}
+        />
       </div>
 
-      <TaskFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-      />
-
-      <TaskList
-        tasks={displayTasks}
-        filters={filters}
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        onToggleTask={handleToggleTask}
-        onEditTask={handleEditTask}
-        onDeleteTask={handleDeleteTask}
-        onDuplicateTask={handleDuplicateTask}
-        onReorderTasks={handleReorderTasks}
-        onToggleSubtask={handleToggleSubtask}
-      />
+      {/* Right Main Content - Task List */}
+      <div className="flex-1 p-6">
+        <TaskList
+          tasks={displayTasks}
+          filters={filters}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onToggleTask={handleToggleTask}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTask}
+          onDuplicateTask={handleDuplicateTask}
+          onReorderTasks={handleReorderTasks}
+          onToggleSubtask={handleToggleSubtask}
+        />
+      </div>
 
       {showTaskForm && !isDemo && (
         <TaskForm
