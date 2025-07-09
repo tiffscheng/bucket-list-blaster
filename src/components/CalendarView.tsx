@@ -1,13 +1,13 @@
+
 import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, isWithinInterval, eachDayOfInterval } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, isWithinInterval, eachDayOfInterval, getDay } from 'date-fns';
 import { Task } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import TaskForm from './TaskForm';
-import TaskItem from './TaskItem';
 
 /**
  * CalendarView component - Calendar interface for viewing and managing tasks
@@ -122,6 +122,13 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
     );
   };
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    if (viewMode !== 'daily') {
+      setViewMode('daily');
+    }
+  };
+
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     if (isDemo) return; // Prevent task creation in demo mode
     addTask({
@@ -170,6 +177,19 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
     toggleSubtask(taskId, subtaskId);
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-700';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'low':
+        return 'bg-green-100 text-green-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   if (isLoading && !isDemo) {
     return (
       <div className="p-6 text-center">
@@ -191,16 +211,26 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
                 <p className="text-gray-500">No tasks for this day</p>
               ) : (
                 todayTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onToggle={handleToggleTask}
-                    onEdit={handleEditTask}
-                    onDelete={handleDeleteTask}
-                    onDuplicate={handleDuplicateTask}
-                    onToggleSubtask={handleToggleSubtask}
-                    hideActions={isDemo}
-                  />
+                  <div key={task.id} className="p-3 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{task.title}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                    </div>
+                    {task.description && (
+                      <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                    )}
+                    {task.labels && task.labels.length > 0 && (
+                      <div className="flex gap-1">
+                        {task.labels.map((label, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))
               )}
             </div>
@@ -224,21 +254,17 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
               return (
                 <div 
                   key={day.toString()} 
-                  className={`border rounded-lg p-3 min-h-32 ${
+                  className={`border rounded-lg p-3 min-h-32 cursor-pointer hover:bg-gray-50 ${
                     isSameDay(day, selectedDate) ? 'bg-blue-50 border-blue-300' : 'bg-white'
                   }`}
-                  onClick={() => setSelectedDate(day)}
+                  onClick={() => handleDayClick(day)}
                 >
                   <div className="font-semibold text-sm mb-2">{format(day, 'd')}</div>
                   <div className="space-y-1">
                     {dayTasks.slice(0, 3).map((task) => (
                       <div 
                         key={task.id} 
-                        className="text-xs p-1 bg-blue-100 rounded truncate cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditTask(task);
-                        }}
+                        className={`text-xs p-1 rounded truncate ${getPriorityColor(task.priority)}`}
                       >
                         {task.title}
                       </div>
@@ -256,38 +282,59 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
     }
 
     if (viewMode === 'monthly') {
+      // Create a proper monthly grid
+      const monthStart = startOfMonth(selectedDate);
+      const monthEnd = endOfMonth(selectedDate);
+      const startCalendar = startOfWeek(monthStart);
+      const endCalendar = endOfWeek(monthEnd);
+      const calendarDays = eachDayOfInterval({ start: startCalendar, end: endCalendar });
+
       return (
-        <div className="border rounded-lg p-4">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => date && setSelectedDate(date)}
-            className="w-full"
-            modifiers={{
-              hasTask: (date) => getTasksForDate(date).length > 0
-            }}
-            modifiersStyles={{
-              hasTask: { backgroundColor: '#dbeafe', color: '#1e40af' }
-            }}
-          />
-          <div className="mt-4 space-y-2">
-            <h4 className="font-semibold">Tasks for {format(selectedDate, 'MMMM d, yyyy')}</h4>
-            {getTasksForDate(selectedDate).length === 0 ? (
-              <p className="text-gray-500 text-sm">No tasks for this day</p>
-            ) : (
-              getTasksForDate(selectedDate).map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onToggle={handleToggleTask}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onDuplicate={handleDuplicateTask}
-                  onToggleSubtask={handleToggleSubtask}
-                  hideActions={isDemo}
-                />
-              ))
-            )}
+        <div className="space-y-4">
+          <div className="grid grid-cols-7 gap-1">
+            {/* Header row */}
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="text-center font-semibold p-2 bg-gray-100 rounded text-sm">
+                {day}
+              </div>
+            ))}
+            
+            {/* Calendar days */}
+            {calendarDays.map((day) => {
+              const dayTasks = getTasksForDate(day);
+              const isCurrentMonth = day >= monthStart && day <= monthEnd;
+              const isToday = isSameDay(day, new Date());
+              const isSelected = isSameDay(day, selectedDate);
+
+              return (
+                <div 
+                  key={day.toString()} 
+                  className={`border rounded-lg p-2 min-h-24 cursor-pointer hover:bg-gray-50 ${
+                    isSelected ? 'bg-blue-50 border-blue-300' : 'bg-white'
+                  } ${!isCurrentMonth ? 'opacity-40' : ''} ${
+                    isToday ? 'ring-2 ring-blue-400' : ''
+                  }`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  <div className={`text-sm mb-1 ${isToday ? 'font-bold text-blue-600' : 'font-medium'}`}>
+                    {format(day, 'd')}
+                  </div>
+                  <div className="space-y-1">
+                    {dayTasks.slice(0, 2).map((task) => (
+                      <div 
+                        key={task.id} 
+                        className={`text-xs p-1 rounded truncate ${getPriorityColor(task.priority)}`}
+                      >
+                        {task.title}
+                      </div>
+                    ))}
+                    {dayTasks.length > 2 && (
+                      <div className="text-xs text-gray-500">+{dayTasks.length - 2}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       );
