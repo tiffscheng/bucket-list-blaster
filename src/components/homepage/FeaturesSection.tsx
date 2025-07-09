@@ -46,7 +46,7 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div key={index} className="text-center p-6 rounded-xl hover:shadow-lg transition-shadow duration-300">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                <feature.icon className="h-8 w-8 text-blue-600" />
+                <feature.icon className="h-8 w-8 text-blue-600 shadow-sm" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 {feature.title}
