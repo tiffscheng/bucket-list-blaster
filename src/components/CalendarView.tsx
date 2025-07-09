@@ -1,13 +1,20 @@
 
 import { useState, useMemo } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, isWithinInterval, eachDayOfInterval, getDay } from 'date-fns';
 import { Task } from '@/types/Task';
 import { useTasks } from '@/hooks/useTasks';
 import TaskForm from './TaskForm';
+import CalendarNavigation from './calendar/CalendarNavigation';
+import DailyView from './calendar/DailyView';
+import WeeklyView from './calendar/WeeklyView';
+import MonthlyView from './calendar/MonthlyView';
+import CalendarSidebar from './calendar/CalendarSidebar';
+import { 
+  ViewMode, 
+  getDateRange, 
+  navigateDate as navigateDateUtil, 
+  getTasksForDate, 
+  getUpcomingTasks 
+} from './calendar/CalendarUtils';
 
 /**
  * CalendarView component - Calendar interface for viewing and managing tasks
@@ -21,7 +28,7 @@ interface CalendarViewProps {
 
 const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -81,45 +88,11 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const tasksWithDueDates = displayTasks.filter(task => task.due_date);
   const recurringTasks = displayTasks.filter(task => task.is_recurring);
   
-  const getDateRange = () => {
-    switch (viewMode) {
-      case 'daily':
-        return { start: selectedDate, end: selectedDate };
-      case 'weekly':
-        return { start: startOfWeek(selectedDate), end: endOfWeek(selectedDate) };
-      case 'monthly':
-        return { start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) };
-    }
-  };
+  const { start: rangeStart, end: rangeEnd } = getDateRange(selectedDate, viewMode);
+  const upcomingTasks = getUpcomingTasks(tasksWithDueDates, rangeEnd);
 
-  const navigateDate = (direction: 'prev' | 'next') => {
-    switch (viewMode) {
-      case 'daily':
-        setSelectedDate(direction === 'next' ? addDays(selectedDate, 1) : subDays(selectedDate, 1));
-        break;
-      case 'weekly':
-        setSelectedDate(direction === 'next' ? addWeeks(selectedDate, 1) : subWeeks(selectedDate, 1));
-        break;
-      case 'monthly':
-        setSelectedDate(direction === 'next' ? addMonths(selectedDate, 1) : subMonths(selectedDate, 1));
-        break;
-    }
-  };
-
-  const { start: rangeStart, end: rangeEnd } = getDateRange();
-  
-  const tasksInRange = tasksWithDueDates.filter(task => 
-    task.due_date && isWithinInterval(task.due_date, { start: rangeStart, end: rangeEnd })
-  );
-
-  const upcomingTasks = tasksWithDueDates.filter(task => 
-    task.due_date && task.due_date > rangeEnd
-  ).slice(0, 5);
-
-  const getTasksForDate = (date: Date) => {
-    return tasksWithDueDates.filter(task => 
-      task.due_date && isSameDay(task.due_date, date)
-    );
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    setSelectedDate(navigateDateUtil(selectedDate, viewMode, direction));
   };
 
   const handleDayClick = (date: Date) => {
@@ -151,45 +124,6 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
     setShowTaskForm(false);
   };
 
-  const handleDeleteTask = (id: string) => {
-    if (isDemo) return; // Prevent task deletion in demo mode
-    deleteTask(id);
-  };
-
-  const handleToggleTask = (id: string) => {
-    if (isDemo) return; // Prevent task toggling in demo mode
-    toggleTask(id);
-  };
-
-  const handleDuplicateTask = (task: Task) => {
-    if (isDemo) return; // Prevent task duplication in demo mode
-    const duplicatedTask = {
-      ...task,
-      title: `${task.title} (Copy)`,
-      id: 'duplicate-temp'
-    };
-    setEditingTask(duplicatedTask);
-    setShowTaskForm(true);
-  };
-
-  const handleToggleSubtask = (taskId: string, subtaskId: string) => {
-    if (isDemo) return; // Prevent subtask toggling in demo mode
-    toggleSubtask(taskId, subtaskId);
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-700';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'low':
-        return 'bg-green-100 text-green-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
   if (isLoading && !isDemo) {
     return (
       <div className="p-6 text-center">
@@ -200,144 +134,29 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   }
 
   const renderCalendarView = () => {
-    if (viewMode === 'daily') {
-      const todayTasks = getTasksForDate(selectedDate);
-      return (
-        <div className="space-y-4">
-          <div className="text-center p-8 border rounded-lg bg-gray-50">
-            <h3 className="text-xl font-semibold mb-4">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</h3>
-            <div className="space-y-3">
-              {todayTasks.length === 0 ? (
-                <p className="text-gray-500">No tasks for this day</p>
-              ) : (
-                todayTasks.map((task) => (
-                  <div key={task.id} className="p-3 border rounded-lg bg-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{task.title}</span>
-                      <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    {task.description && (
-                      <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                    )}
-                    {task.labels && task.labels.length > 0 && (
-                      <div className="flex gap-1">
-                        {task.labels.map((label, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {label}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
+    const todayTasks = getTasksForDate(tasksWithDueDates, selectedDate);
 
-    if (viewMode === 'weekly') {
-      const weekDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-7 gap-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center font-semibold p-2 bg-gray-100 rounded">
-                {day}
-              </div>
-            ))}
-            {weekDays.map((day) => {
-              const dayTasks = getTasksForDate(day);
-              return (
-                <div 
-                  key={day.toString()} 
-                  className={`border rounded-lg p-3 min-h-32 cursor-pointer hover:bg-gray-50 ${
-                    isSameDay(day, selectedDate) ? 'bg-blue-50 border-blue-300' : 'bg-white'
-                  }`}
-                  onClick={() => handleDayClick(day)}
-                >
-                  <div className="font-semibold text-sm mb-2">{format(day, 'd')}</div>
-                  <div className="space-y-1">
-                    {dayTasks.slice(0, 3).map((task) => (
-                      <div 
-                        key={task.id} 
-                        className={`text-xs p-1 rounded truncate ${getPriorityColor(task.priority)}`}
-                      >
-                        {task.title}
-                      </div>
-                    ))}
-                    {dayTasks.length > 3 && (
-                      <div className="text-xs text-gray-500">+{dayTasks.length - 3} more</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    if (viewMode === 'monthly') {
-      // Create a proper monthly grid
-      const monthStart = startOfMonth(selectedDate);
-      const monthEnd = endOfMonth(selectedDate);
-      const startCalendar = startOfWeek(monthStart);
-      const endCalendar = endOfWeek(monthEnd);
-      const calendarDays = eachDayOfInterval({ start: startCalendar, end: endCalendar });
-
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-7 gap-1">
-            {/* Header row */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center font-semibold p-2 bg-gray-100 rounded text-sm">
-                {day}
-              </div>
-            ))}
-            
-            {/* Calendar days */}
-            {calendarDays.map((day) => {
-              const dayTasks = getTasksForDate(day);
-              const isCurrentMonth = day >= monthStart && day <= monthEnd;
-              const isToday = isSameDay(day, new Date());
-              const isSelected = isSameDay(day, selectedDate);
-
-              return (
-                <div 
-                  key={day.toString()} 
-                  className={`border rounded-lg p-2 min-h-24 cursor-pointer hover:bg-gray-50 ${
-                    isSelected ? 'bg-blue-50 border-blue-300' : 'bg-white'
-                  } ${!isCurrentMonth ? 'opacity-40' : ''} ${
-                    isToday ? 'ring-2 ring-blue-400' : ''
-                  }`}
-                  onClick={() => handleDayClick(day)}
-                >
-                  <div className={`text-sm mb-1 ${isToday ? 'font-bold text-blue-600' : 'font-medium'}`}>
-                    {format(day, 'd')}
-                  </div>
-                  <div className="space-y-1">
-                    {dayTasks.slice(0, 2).map((task) => (
-                      <div 
-                        key={task.id} 
-                        className={`text-xs p-1 rounded truncate ${getPriorityColor(task.priority)}`}
-                      >
-                        {task.title}
-                      </div>
-                    ))}
-                    {dayTasks.length > 2 && (
-                      <div className="text-xs text-gray-500">+{dayTasks.length - 2}</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
+    switch (viewMode) {
+      case 'daily':
+        return <DailyView selectedDate={selectedDate} tasks={todayTasks} />;
+      case 'weekly':
+        return (
+          <WeeklyView
+            selectedDate={selectedDate}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            tasks={tasksWithDueDates}
+            onDayClick={handleDayClick}
+          />
+        );
+      case 'monthly':
+        return (
+          <MonthlyView
+            selectedDate={selectedDate}
+            tasks={tasksWithDueDates}
+            onDayClick={handleDayClick}
+          />
+        );
     }
   };
 
@@ -345,94 +164,22 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
     <div className="flex h-full">
       {/* Left Calendar Section */}
       <div className="flex-1 p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'daily' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('daily')}
-            >
-              Daily
-            </Button>
-            <Button
-              variant={viewMode === 'weekly' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('weekly')}
-            >
-              Weekly
-            </Button>
-            <Button
-              variant={viewMode === 'monthly' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('monthly')}
-            >
-              Monthly
-            </Button>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
-            <ChevronLeft size={16} />
-          </Button>
-          <h3 className="text-lg font-semibold">
-            {viewMode === 'daily' && format(selectedDate, 'MMMM d, yyyy')}
-            {viewMode === 'weekly' && `${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`}
-            {viewMode === 'monthly' && format(selectedDate, 'MMMM yyyy')}
-          </h3>
-          <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
-            <ChevronRight size={16} />
-          </Button>
-        </div>
+        <CalendarNavigation
+          selectedDate={selectedDate}
+          viewMode={viewMode}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          onNavigate={handleNavigate}
+          onViewModeChange={setViewMode}
+        />
         
         {renderCalendarView()}
       </div>
 
-      {/* Right Sidebar */}
-      <div className="w-80 border-l border-gray-200 p-6 space-y-6">
-        {/* Recurring Tasks */}
-        <div>
-          <h4 className="text-lg font-semibold mb-3">Recurring Tasks</h4>
-          <div className="space-y-2">
-            {recurringTasks.length === 0 ? (
-              <p className="text-gray-500 text-sm">No recurring tasks</p>
-            ) : (
-              recurringTasks.map((task) => (
-                <div key={task.id} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{task.title}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {task.recurrence_interval}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Upcoming Tasks */}
-        <div>
-          <h4 className="text-lg font-semibold mb-3">Upcoming Tasks</h4>
-          <div className="space-y-2">
-            {upcomingTasks.length === 0 ? (
-              <p className="text-gray-500 text-sm">No upcoming tasks</p>
-            ) : (
-              upcomingTasks.map((task) => (
-                <div key={task.id} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{task.title}</span>
-                    <span className="text-xs text-gray-500">
-                      {task.due_date && format(task.due_date, 'MMM d')}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      <CalendarSidebar
+        recurringTasks={recurringTasks}
+        upcomingTasks={upcomingTasks}
+      />
 
       {showTaskForm && !isDemo && (
         <TaskForm
