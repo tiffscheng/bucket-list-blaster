@@ -164,7 +164,6 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
           onSortChange={setSortBy}
           sortDirection={sortDirection}
           onSortDirectionChange={setSortDirection}
-          tasks={displayTasks}
         />
       </div>
 
