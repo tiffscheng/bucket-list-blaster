@@ -2,18 +2,20 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ListIcon, Calendar, Shuffle, Lock, ArrowRight, AlertTriangle } from 'lucide-react';
+import { ListIcon, Calendar, Shuffle, Lock, ArrowRight, AlertTriangle, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import TaskManager from '@/components/TaskManager';
+import CalendarView from '@/components/CalendarView';
 
 /**
  * Demo page component - Shows a locked version of the TaskFlow app
- * Displays sample tasks and locked functionality to encourage sign-up
+ * Displays the real app interface with sample tasks and locked functionality
  * 
  * Features:
- * - View switcher for different app views (list, calendar, random)
- * - Sample tasks displayed in unlocked state
+ * - Real TaskManager and CalendarView components
+ * - Sample tasks displayed in actual interface
  * - Warning banner to encourage authentication
- * - Locked interactive elements (buttons disabled with lock icons)
+ * - Locked Add Task button and Random Task Generator
  * - Sign-up prompts for locked features
  */
 const Demo = () => {
@@ -33,18 +35,6 @@ const Demo = () => {
   const handleBackToHome = () => {
     navigate('/');
   };
-
-  // Sample tasks for demonstration purposes
-  const mockTasks = [
-    { id: 1, title: "Complete project proposal", bucket: "Work", priority: "High", completed: false },
-    { id: 2, title: "Review quarterly reports", bucket: "Work", priority: "Medium", completed: false },
-    { id: 3, title: "Plan weekend trip", bucket: "Personal", priority: "Low", completed: true },
-    { id: 4, title: "Buy groceries", bucket: "Personal", priority: "Medium", completed: false },
-    { id: 5, title: "Schedule team meeting", bucket: "Work", priority: "High", completed: false },
-  ];
-
-  // Filter to show only incomplete tasks for the demo
-  const activeTasks = mockTasks.filter(task => !task.completed);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -84,8 +74,18 @@ const Demo = () => {
         </Alert>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">TaskFlow Demo</h1>
-          <p className="text-gray-600">Experience the power of TaskFlow task management</p>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="flex-1">
+              <p className="text-gray-600 mb-4 sm:mb-0">Organize your tasks, manage your time, achieve your goals</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span className="text-sm text-gray-600 order-2 sm:order-1">Demo User</span>
+              <Button variant="outline" size="sm" disabled className="order-1 sm:order-2 opacity-50">
+                <LogOut size={16} className="mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* View switcher with locked random task generator */}
@@ -117,75 +117,23 @@ const Demo = () => {
           </Button>
         </div>
 
-        {/* Demo content without overlay */}
+        {/* Real app content */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="p-6">
-            {currentView === 'list' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Your Tasks ({activeTasks.length})</h3>
-                  <Button disabled className="opacity-50">
-                    <Lock className="mr-2 h-4 w-4" />
-                    Add Task
-                  </Button>
-                </div>
-                {activeTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{task.title}</h4>
-                      <p className="text-sm text-gray-600">{task.bucket}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      task.priority === 'High' ? 'bg-red-100 text-red-800' :
-                      task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {currentView === 'calendar' && (
-              <div className="p-8">
-                <h3 className="text-lg font-semibold mb-4">Calendar View</h3>
-                <div className="grid grid-cols-7 gap-2 mb-4">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="p-2 text-center font-medium text-gray-600">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-2">
-                  {Array.from({ length: 35 }, (_, i) => (
-                    <div key={i} className="aspect-square border rounded p-1 text-sm">
-                      {i > 4 && i < 32 ? (i - 4).toString() : ''}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {currentView === 'random' && (
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-semibold mb-4">Random Task Generator</h3>
-                <div className="bg-blue-50 rounded-lg p-6 mb-6">
-                  <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h4 className="font-medium mb-2 text-gray-600">Feature Locked</h4>
-                  <p className="text-lg text-gray-500 mb-4">Sign up to use the Random Task Generator</p>
-                  <Button onClick={handleSignUp} className="w-full">
-                    Sign Up Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </div>
-                <Button disabled className="opacity-50">
-                  <Shuffle className="mr-2 h-4 w-4" />
-                  Generate Random Task
+          {currentView === 'list' && <TaskManager isDemo={true} />}
+          {currentView === 'calendar' && <CalendarView isDemo={true} />}
+          {currentView === 'random' && (
+            <div className="p-8 text-center">
+              <div className="bg-blue-50 rounded-lg p-6 mb-6">
+                <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="font-medium mb-2 text-gray-600">Feature Locked</h4>
+                <p className="text-lg text-gray-500 mb-4">Sign up to use the Random Task Generator</p>
+                <Button onClick={handleSignUp} className="w-full">
+                  Sign Up Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

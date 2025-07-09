@@ -1,111 +1,193 @@
-
-import { useState, useEffect } from 'react';
-import { useTasks } from '@/hooks/useTasks';
-import TaskForm from './TaskForm';
-import TaskList from './TaskList';
-import TaskFilters from './TaskFilters';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { Task, TaskFilters as TTaskFilters } from '@/types/Task';
+import { Plus, Lock } from 'lucide-react';
+import TaskList from './TaskList';
+import TaskForm from './TaskForm';
+import TaskFilters from './TaskFilters';
+import { Task, TaskFilters as TaskFiltersType } from '@/types/Task';
+import { useTasks } from '@/hooks/useTasks';
 
-const TaskManager = () => {
-  const { tasks, addTask, updateTask, deleteTask, toggleTask, toggleSubtask, reorderTasks } = useTasks();
-  const [showForm, setShowForm] = useState(false);
+/**
+ * TaskManager component - Main interface for task management
+ * Handles task CRUD operations, filtering, and sorting
+ * 
+ * @param isDemo - Whether the component is in demo mode (disables Add Task)
+ */
+interface TaskManagerProps {
+  isDemo?: boolean;
+}
+
+const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
+  const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [duplicatingTask, setDuplicatingTask] = useState<Task | null>(null);
-  const [filters, setFilters] = useState<TTaskFilters>({});
+  const [filters, setFilters] = useState<TaskFiltersType>({});
   const [sortBy, setSortBy] = useState<'manual' | 'priority' | 'effort' | 'dueDate'>('manual');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const {
+    tasks,
+    isLoading,
+    createTask,
+    updateTask,
+    deleteTask,
+    toggleTask,
+    reorderTasks,
+    toggleSubtask
+  } = useTasks();
+
+  // Demo tasks for when in demo mode
+  const demoTasks: Task[] = useMemo(() => [
+    {
+      id: 'demo-1',
+      title: 'Complete project proposal',
+      description: 'Draft and finalize the Q4 project proposal',
+      priority: 'high' as const,
+      effort: 'long' as const,
+      labels: ['Work', 'Important'],
+      completed: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+      order_index: 0,
+      subtasks: [],
+      is_recurring: false,
+      recurrence_interval: undefined,
+      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      user_id: 'demo-user',
+      bucket_id: null
+    },
+    {
+      id: 'demo-2',
+      title: 'Review quarterly reports',
+      description: 'Analyze Q3 performance metrics and prepare summary',
+      priority: 'medium' as const,
+      effort: 'medium' as const,
+      labels: ['Work', 'Analysis'],
+      completed: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+      order_index: 1,
+      subtasks: [
+        { id: 'demo-subtask-1', title: 'Download reports', completed: true },
+        { id: 'demo-subtask-2', title: 'Create summary', completed: false }
+      ],
+      is_recurring: false,
+      recurrence_interval: undefined,
+      due_date: undefined,
+      user_id: 'demo-user',
+      bucket_id: null
+    }
+  ], []);
+
+  // Use demo tasks when in demo mode, otherwise use real tasks
+  const displayTasks = isDemo ? demoTasks : tasks;
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
-    addTask(taskData);
-    setShowForm(false);
-    setDuplicatingTask(null);
+    if (isDemo) return; // Prevent task creation in demo mode
+    createTask(taskData);
+    setShowTaskForm(false);
   };
 
-  const handleEditTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
-    if (editingTask) {
-      updateTask(editingTask.id, taskData);
-      setEditingTask(null);
-    }
+  const handleEditTask = (task: Task) => {
+    if (isDemo) return; // Prevent task editing in demo mode
+    setEditingTask(task);
+    setShowTaskForm(true);
+  };
+
+  const handleUpdateTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
+    if (isDemo || !editingTask) return; // Prevent task updates in demo mode
+    updateTask(editingTask.id, taskData);
+    setEditingTask(null);
+    setShowTaskForm(false);
+  };
+
+  const handleDeleteTask = (id: string) => {
+    if (isDemo) return; // Prevent task deletion in demo mode
+    deleteTask(id);
+  };
+
+  const handleToggleTask = (id: string) => {
+    if (isDemo) return; // Prevent task toggling in demo mode
+    toggleTask(id);
   };
 
   const handleDuplicateTask = (task: Task) => {
-    const duplicatedTaskData = {
+    if (isDemo) return; // Prevent task duplication in demo mode
+    const duplicatedTask = {
+      ...task,
       title: `${task.title} (Copy)`,
-      description: task.description,
-      priority: task.priority,
-      effort: task.effort,
-      labels: [...task.labels],
-      due_date: task.due_date,
-      bucket_id: task.bucket_id,
-      subtasks: task.subtasks.map(subtask => ({
-        id: crypto.randomUUID(),
-        title: subtask.title,
-        completed: false
-      })),
-      is_recurring: task.is_recurring,
-      recurrence_interval: task.recurrence_interval,
-      user_id: task.user_id,
-      updated_at: task.updated_at,
+      id: 'duplicate-temp'
     };
-    
-    // Create a mock task object for the form
-    setDuplicatingTask({
-      ...duplicatedTaskData,
-      id: 'duplicate-temp',
-      completed: false,
-      created_at: new Date(),
-      order_index: 0
-    });
+    setEditingTask(duplicatedTask);
+    setShowTaskForm(true);
   };
 
-  const handleCancelForm = () => {
-    setShowForm(false);
-    setEditingTask(null);
-    setDuplicatingTask(null);
+  const handleReorderTasks = (reorderedTasks: Task[]) => {
+    if (isDemo) return; // Prevent reordering in demo mode
+    reorderTasks(reorderedTasks);
   };
+
+  const handleToggleSubtask = (taskId: string, subtaskId: string) => {
+    if (isDemo) return; // Prevent subtask toggling in demo mode
+    toggleSubtask(taskId, subtaskId);
+  };
+
+  if (isLoading && !isDemo) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading tasks...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-1/4">
-          <div className="space-y-4">
-            <Button
-              onClick={() => setShowForm(true)}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-            >
-              <Plus size={18} className="mr-2" />
-              Add New Task
-            </Button>
-            <TaskFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-            />
-          </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+          <p className="text-gray-600 mt-1">Manage your tasks and stay organized</p>
         </div>
-
-        <div className="lg:w-3/4">
-          <TaskList
-            tasks={tasks}
-            filters={filters}
-            sortBy={sortBy}
-            onToggleTask={toggleTask}
-            onEditTask={setEditingTask}
-            onDeleteTask={deleteTask}
-            onDuplicateTask={handleDuplicateTask}
-            onReorderTasks={reorderTasks}
-            onToggleSubtask={toggleSubtask}
-          />
-        </div>
+        <Button 
+          onClick={() => !isDemo && setShowTaskForm(true)} 
+          className="flex items-center gap-2"
+          disabled={isDemo}
+        >
+          {isDemo ? <Lock size={16} /> : <Plus size={16} />}
+          Add Task
+        </Button>
       </div>
 
-      {(showForm || editingTask || duplicatingTask) && (
+      <TaskFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        sortDirection={sortDirection}
+        onSortDirectionChange={setSortDirection}
+        tasks={displayTasks}
+      />
+
+      <TaskList
+        tasks={displayTasks}
+        filters={filters}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onToggleTask={handleToggleTask}
+        onEditTask={handleEditTask}
+        onDeleteTask={handleDeleteTask}
+        onDuplicateTask={handleDuplicateTask}
+        onReorderTasks={handleReorderTasks}
+        onToggleSubtask={handleToggleSubtask}
+      />
+
+      {showTaskForm && !isDemo && (
         <TaskForm
-          task={editingTask || duplicatingTask}
-          onSubmit={editingTask ? handleEditTask : handleAddTask}
-          onCancel={handleCancelForm}
+          task={editingTask}
+          onSubmit={editingTask ? handleUpdateTask : handleAddTask}
+          onCancel={() => {
+            setShowTaskForm(false);
+            setEditingTask(null);
+          }}
         />
       )}
     </div>
