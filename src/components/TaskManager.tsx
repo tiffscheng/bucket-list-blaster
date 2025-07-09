@@ -146,7 +146,7 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
       <div className="w-80 border-r border-gray-200 p-6">
         <Button 
           onClick={() => !isDemo && setShowTaskForm(true)} 
-          className="w-full flex items-center justify-center gap-2 mb-6"
+          className="bg-gradient-to-br from-blue to-purple w-full flex items-center justify-center gap-2 mb-6"
           disabled={isDemo}
         >
           {isDemo ? <Lock size={16} /> : <Plus size={16} />}

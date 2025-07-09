@@ -46,7 +46,7 @@ const Demo = () => {
               <img 
                 src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
                 alt="TaskFlow" 
-                className="h-8"
+                className="h-6"
               />
               <span className="text-sm text-gray-500 bg-yellow-100 px-2 py-1 rounded-full">
                 Demo Mode
@@ -72,21 +72,6 @@ const Demo = () => {
             <strong>Demo Mode:</strong> Sign up or sign in to save tasks and unlock the full TaskFlow experience.
           </AlertDescription>
         </Alert>
-
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div className="flex-1">
-              <p className="text-gray-600 mb-4 sm:mb-0">Organize your tasks, manage your time, achieve your goals</p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <span className="text-sm text-gray-600 order-2 sm:order-1">Demo User</span>
-              <Button variant="outline" size="sm" disabled className="order-1 sm:order-2 opacity-50">
-                <LogOut size={16} className="mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
 
         {/* View switcher with locked random task generator */}
         <div className="flex flex-wrap gap-4 mb-8">
