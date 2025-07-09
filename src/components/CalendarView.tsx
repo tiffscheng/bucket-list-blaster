@@ -27,7 +27,7 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const {
     tasks,
     isLoading,
-    createTask,
+    addTask,
     updateTask,
     deleteTask,
     toggleTask,
@@ -106,7 +106,7 @@ const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     if (isDemo) return; // Prevent task creation in demo mode
-    createTask({
+    addTask({
       ...taskData,
       due_date: selectedDate
     });

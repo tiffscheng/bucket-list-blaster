@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Lock } from 'lucide-react';
@@ -27,7 +28,7 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
   const {
     tasks,
     isLoading,
-    createTask,
+    addTask,
     updateTask,
     deleteTask,
     toggleTask,
@@ -83,7 +84,7 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'completed' | 'created_at' | 'order_index'>) => {
     if (isDemo) return; // Prevent task creation in demo mode
-    createTask(taskData);
+    addTask(taskData);
     setShowTaskForm(false);
   };
 
@@ -164,7 +165,6 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
         onSortChange={setSortBy}
         sortDirection={sortDirection}
         onSortDirectionChange={setSortDirection}
-        tasks={displayTasks}
       />
 
       <TaskList
