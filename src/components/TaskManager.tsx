@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Lock } from 'lucide-react';
@@ -145,17 +144,14 @@ const TaskManager = ({ isDemo = false }: TaskManagerProps) => {
     <div className="flex h-full">
       {/* Left Sidebar - Filters & Sort */}
       <div className="w-80 border-r border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <Button 
-            onClick={() => !isDemo && setShowTaskForm(true)} 
-            className="flex items-center gap-2"
-            disabled={isDemo}
-          >
-            {isDemo ? <Lock size={16} /> : <Plus size={16} />}
-            Add Task
-          </Button>
-        </div>
+        <Button 
+          onClick={() => !isDemo && setShowTaskForm(true)} 
+          className="w-full flex items-center justify-center gap-2 mb-6"
+          disabled={isDemo}
+        >
+          {isDemo ? <Lock size={16} /> : <Plus size={16} />}
+          Add Task
+        </Button>
 
         <TaskFilters
           filters={filters}
