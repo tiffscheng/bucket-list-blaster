@@ -28,7 +28,7 @@ interface CalendarViewProps {
 
 const CalendarView = ({ isDemo = false }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('weekly');
+  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
