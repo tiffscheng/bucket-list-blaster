@@ -36,7 +36,7 @@ const FeaturesSection = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Everything you need to stay organized
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-md text-gray-600 max-w-2xl mx-auto">
             TaskFlow combines powerful features with an intuitive design to help you 
             manage your tasks efficiently.
           </p>

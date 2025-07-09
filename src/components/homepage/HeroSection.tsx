@@ -20,16 +20,16 @@ const HeroSection = ({ onGetStarted, onSignIn }: HeroSectionProps) => {
             Organize your tasks,<br />
             <span className="text-blue-600">achieve your goals</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             TaskFlow helps you manage your tasks with smart organization, calendar views, 
             and intelligent features that boost your productivity.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-3">
+            <Button size="lg" onClick={onGetStarted} className="text-md px-8 py-3">
               Start Organizing Today
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" onClick={onSignIn} className="text-lg px-8 py-3">
+            <Button variant="outline" size="lg" onClick={onSignIn} className="text-md px-8 py-3">
               Sign In
             </Button>
           </div>

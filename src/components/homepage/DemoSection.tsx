@@ -18,7 +18,7 @@ const DemoSection = ({ onTryDemo }: DemoSectionProps) => {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             See TaskFlow in action
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-lg text-gray-600 mb-8">
             Get a glimpse of how TaskFlow makes task management effortless
           </p>
           <Button 
