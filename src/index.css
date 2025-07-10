@@ -101,3 +101,44 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+body {
+  font-kerning: normal;
+}
+
+/* Animated Hero Background */
+#heroSection {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f172a; /* fallback background */
+  color: white;
+  z-index: 0;
+}
+
+#heroBG {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.4), transparent 40%),
+              radial-gradient(circle at 80% 60%, rgba(139, 92, 246, 0.4), transparent 40%),
+              radial-gradient(circle at 50% 20%, rgba(165, 180, 252, 0.2), transparent 50%);
+  animation: floatBackground 20s ease-in-out infinite alternate;
+  background-size: 200% 200%;
+  filter: blur(50px);
+  opacity: 0.8;
+}
+
+@keyframes floatBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
