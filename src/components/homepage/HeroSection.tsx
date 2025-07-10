@@ -25,7 +25,7 @@ const HeroSection = ({ onGetStarted, onSignIn }: HeroSectionProps) => {
             and intelligent features that boost your productivity.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-3 bg-gradient to-r from-blue-600 to-purple-600">
+            <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600">
               Start Organizing Today
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
