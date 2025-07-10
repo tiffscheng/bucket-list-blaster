@@ -6,7 +6,7 @@ import RandomTaskGenerator from '@/components/RandomTaskGenerator';
 import { Button } from '@/components/ui/button';
 import { ListIcon, Calendar, Shuffle, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'list' | 'calendar' | 'random'>('list');
@@ -28,11 +28,12 @@ const Index = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex-1">
+              <Link to="Homepage">
               <img 
                 src="/lovable-uploads/a9b35cdb-10d4-4b2d-834a-fb18ef99eb4a.png" 
                 alt="TaskFlow" 
                 className="h-6 mb-4"
-              />
+              /></Link>
               <p className="text-gray-600 mb-4 sm:mb-0">Organize your tasks, manage your time, achieve your goals</p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
