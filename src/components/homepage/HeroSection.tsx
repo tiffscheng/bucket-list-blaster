@@ -36,7 +36,7 @@ const HeroSection = ({ onGetStarted, onSignIn }: HeroSectionProps) => {
         </div>
       </div>
       
-      <div id="heroBG"></div>
+      <div id="heroBG" className="mix-blend-multiply animate-pulse"></div>
       {/* Decorative background elements
       <div className="absolute top-20 left-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
       <div className="absolute bottom-20 right-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
