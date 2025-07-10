@@ -129,7 +129,7 @@ body {
   background: radial-gradient(circle at 20% 40%, rgba(99, 102, 241, 0.2), transparent 40%),
               radial-gradient(circle at 80% 60%, rgba(37, 99, 235, 0.2), transparent 40%),
               radial-gradient(circle at 50% 20%, rgba(165, 180, 252, 0.1), transparent 50%);
-  animation: floatBackground 20s ease-in-out infinite alternate;
+  animation: floatBackground 24s ease-in-out infinite alternate;
   background-size: 200% 200%;
   filter: blur(50px);
   opacity: 0.8;
