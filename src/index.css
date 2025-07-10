@@ -113,7 +113,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0f172a; /* fallback background */
+  background-color: #fff; /* fallback background */
+  background-image: linear-gradient(to right, blue, white);
   color: white;
   z-index: 0;
 }
